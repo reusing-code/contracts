@@ -1,35 +1,34 @@
 <template>
-  <div id="contract-list">
-    <v-simple-table>
-      <table>
-        <thead>
-          <tr>
-            <th v-for="column in columns" :key="column">
-              {{ column }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <TableRow
-            v-for="contract in contracts"
-            :key="contract.id"
-            v-bind:data="contract"
-            v-bind:columns="columns"
-          ></TableRow>
-        </tbody>
-      </table>
-    </v-simple-table>
-  </div>
+  <v-card>
+    <v-card-title>
+      Contracts
+      <v-spacer></v-spacer>
+      <v-text-field
+        v-model="search"
+        append-icon="mdi-magnify"
+        label="Search"
+        single-line
+        hide-details
+      ></v-text-field>
+    </v-card-title>
+    <v-data-table
+      :headers="headers"
+      :items="contracts"
+      :search="search"
+    ></v-data-table>
+  </v-card>
 </template>
 
 <script>
-import TableRow from "@/components/TableRow.vue";
-
 export default {
-  components: { TableRow },
   data() {
     return {
-      columns: ["id", "name", "value"],
+      search: "",
+      headers: [
+        { text: "ID", value: "id" },
+        { text: "Name", value: "name" },
+        { text: "Value", value: "value" }
+      ],
       contracts: [
         { id: 1, name: "bank", value: "abc" },
         { id: 2, name: "insurenace", value: "def" },
