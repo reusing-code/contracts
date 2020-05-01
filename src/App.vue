@@ -2,7 +2,12 @@
   <v-app>
     <v-navigation-drawer v-model="drawer" app>
       <v-list dense>
-        <v-list-item link v-for="item in navItems" :key="item.title" :to="item.link">
+        <v-list-item
+          link
+          v-for="item in navItems"
+          :key="item.title"
+          :to="item.link"
+        >
           <v-list-item-action>
             <v-icon v-if="item.icon">{{ item.icon }}</v-icon>
           </v-list-item-action>
@@ -38,10 +43,11 @@ export default {
       navItems: [
         { title: "Home", icon: "mdi-home", link: "/" },
         { title: "About", icon: "mdi-corn", link: "/about" },
-        { title: "Contracts", icon: "mdi-file-cabinet", link: "/contracts" }
-      ]
+        { title: "Contracts", icon: "mdi-file-cabinet", link: "/contracts" },
+        { title: "Test", icon: "mdi-square-edit-outline", link: "/test" },
+      ],
     };
-  }
+  },
 };
 </script>
 

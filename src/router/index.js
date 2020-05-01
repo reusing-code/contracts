@@ -3,7 +3,8 @@ import VueRouter from "vue-router";
 
 import About from "../views/About.vue";
 import Home from "../views/Home.vue";
-import ContractList from "../components/ContractList.vue";
+import Contracts from "../views/Contracts.vue";
+import EditTest from "../components/EditTest.vue";
 
 Vue.use(VueRouter);
 
@@ -12,15 +13,16 @@ const routes = [
   {
     path: "/about",
     name: "About",
-    component: About
+    component: About,
   },
-  { path: "/contracts", name: "Contracts", component: ContractList }
+  { path: "/contracts", name: "Contracts", component: Contracts },
+  { path: "/test", name: "Test", component: EditTest },
 ];
 
 const router = new VueRouter({
   mode: "history",
   base: process.env.BASE_URL,
-  routes
+  routes,
 });
 
 export default router;
