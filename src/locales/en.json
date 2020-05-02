@@ -1,0 +1,10 @@
+{
+  "$vuetify": {
+    "dataTable": {
+      "itemsPerPageText": "Rows per page:"
+    },
+    "dataFooter": {
+      "pageText": "{0}-{1} of {2}"
+    }
+  }
+}

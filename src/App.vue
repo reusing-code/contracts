@@ -30,13 +30,19 @@
     </v-content>
 
     <v-footer app>
-      <!-- -->
+      <v-spacer></v-spacer>
+      <v-col cols="1">
+        <LocalChanger></LocalChanger>
+      </v-col>
     </v-footer>
   </v-app>
 </template>
 
 <script>
+import LocalChanger from "@/components/LocaleChanger.vue";
+
 export default {
+  components: { LocalChanger },
   data() {
     return {
       drawer: null,

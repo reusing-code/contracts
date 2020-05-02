@@ -8,16 +8,16 @@
           <v-text-field
             v-model="search"
             append-icon="mdi-magnify"
-            label="Search"
+            :label="$t('search')"
             single-line
             hide-details
           ></v-text-field>
           <v-spacer></v-spacer>
           <v-dialog v-model="dialog" max-width="500px">
             <template v-slot:activator="{ on }">
-              <v-btn color="primary" dark class="mb-2" v-on="on"
-                >New Item</v-btn
-              >
+              <v-btn color="primary" dark class="mb-2" v-on="on">{{
+                $t("newitem")
+              }}</v-btn>
             </template>
             <v-card>
               <v-card-title>
@@ -51,8 +51,12 @@
 
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="primary" text @click="close">Cancel</v-btn>
-                <v-btn color="primary" text @click="save">Save</v-btn>
+                <v-btn color="primary" text @click="close">{{
+                  $t("cancel")
+                }}</v-btn>
+                <v-btn color="primary" text @click="save">{{
+                  $t("save")
+                }}</v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
@@ -143,3 +147,20 @@ export default {
 </script>
 
 <style scoped></style>
+
+<i18n>
+{
+  "en": {
+    "search": "Search",
+    "newitem": "New item",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "de": {
+    "search": "Suche",
+    "newitem": "Neu",
+    "cancel": "Abbruch",
+    "save": "Speichern"
+  }
+}
+</i18n>
