@@ -105,6 +105,9 @@ export default {
       },
     };
   },
+  mounted() {
+    this.loadPersisted();
+  },
   computed: {
     formTitle() {
       return this.editedIndex === -1 ? "New Item" : "Edit Item";
@@ -126,6 +129,7 @@ export default {
       const index = this.contracts.indexOf(item);
       confirm("Are you sure you want to delete this item?") &&
         this.contracts.splice(index, 1);
+      this.persistLocally();
     },
     close() {
       this.dialog = false;
@@ -140,27 +144,24 @@ export default {
       } else {
         this.contracts.push(this.editedItem);
       }
+      this.persistLocally();
       this.close();
+    },
+    persistLocally() {
+      const parsed = JSON.stringify(this.contracts);
+      localStorage.setItem("contracts", parsed);
+    },
+    loadPersisted() {
+      if (localStorage.getItem("contracts")) {
+        try {
+          this.contracts = JSON.parse(localStorage.getItem("contracts"));
+        } catch (e) {
+          localStorage.removeItem("contracts");
+        }
+      }
     },
   },
 };
 </script>
 
 <style scoped></style>
-
-<i18n>
-{
-  "en": {
-    "search": "Search",
-    "newitem": "New item",
-    "cancel": "Cancel",
-    "save": "Save"
-  },
-  "de": {
-    "search": "Suche",
-    "newitem": "Neu",
-    "cancel": "Abbruch",
-    "save": "Speichern"
-  }
-}
-</i18n>
