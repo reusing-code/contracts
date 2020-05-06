@@ -27,22 +27,88 @@
               <v-card-text>
                 <v-container>
                   <v-row>
-                    <v-col cols="12" sm="6" md="4">
+                    <v-col cols="12" md="6">
                       <v-text-field
-                        v-model="editedItem.id"
-                        label="ID"
+                        v-model="editedItem.company"
+                        :label="$t('contracts.company')"
                       ></v-text-field>
                     </v-col>
-                    <v-col cols="12" sm="6" md="4">
+                    <v-col cols="12" md="6">
                       <v-text-field
-                        v-model="editedItem.name"
-                        label="Name"
+                        v-model="editedItem.product"
+                        :label="$t('contracts.product')"
                       ></v-text-field>
                     </v-col>
-                    <v-col cols="12" sm="6" md="4">
+                    <v-col cols="12" md="6">
                       <v-text-field
-                        v-model="editedItem.value"
-                        label="Value"
+                        v-model="editedItem.start"
+                        :label="$t('contracts.start')"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="editedItem.end"
+                        :label="$t('contracts.end')"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="editedItem.extensionMonths"
+                        :label="$t('contracts.extensionMonths')"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="editedItem.noticePeriodMonths"
+                        :label="$t('contracts.noticePeriodMonths')"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="editedItem.pricePerMonth"
+                        :label="$t('contracts.pricePerMonth')"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="editedItem.contractNumber"
+                        :label="$t('contracts.contractNumber')"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="editedItem.customerNumber"
+                        :label="$t('contracts.customerNumber')"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="editedItem.account"
+                        :label="$t('contracts.account')"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="editedItem.paymentOption"
+                        :label="$t('contracts.paymentOption')"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="editedItem.notes"
+                        :label="$t('contracts.notes')"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="editedItem.category"
+                        :label="$t('contracts.category')"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="editedItem.status"
+                        :label="$t('contracts.status')"
                       ></v-text-field>
                     </v-col>
                   </v-row>
@@ -110,7 +176,7 @@ export default {
   },
   computed: {
     formTitle() {
-      return this.editedIndex === -1 ? "New Item" : "Edit Item";
+      return this.editedIndex === -1 ? this.$t("newitem") : this.$t("edititem");
     },
   },
   watch: {
@@ -142,6 +208,8 @@ export default {
       if (this.editedIndex > -1) {
         Object.assign(this.contracts[this.editedIndex], this.editedItem);
       } else {
+        const maxID = Math.max(...this.contracts.map((c) => c.id), 0);
+        this.editedItem.id = maxID + 1;
         this.contracts.push(this.editedItem);
       }
       this.persistLocally();

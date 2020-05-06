@@ -1,6 +1,23 @@
 {
+  "contracts": {
+    "company": "Anbieter",
+    "product": "Produkt",
+    "start": "Beginn",
+    "end": "Ende",
+    "extensionMonths": "Verlängerum um (Monate)",
+    "noticePeriodMonths": "Kündigungsfrist (Monate)",
+    "pricePerMonth": "Preis pro Monat",
+    "contractNumber": "Vertragsnummer",
+    "customerNumber": "Kundennummer",
+    "account": "Account",
+    "paymentOption": "Zahlungsart",
+    "notes": "Notizen",
+    "category": "Kategorie",
+    "status": "Status"
+  },
   "search": "Suche",
   "newitem": "Neu",
+  "edititem": "Bearbeiten",
   "cancel": "Abbruch",
   "save": "Speichern"
 }
