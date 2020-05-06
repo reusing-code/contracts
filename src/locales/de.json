@@ -6,5 +6,9 @@
     "dataFooter": {
       "pageText": "{0}-{1} von {2}"
     }
-  }
+  },
+  "search": "Suche",
+  "newitem": "Neu",
+  "cancel": "Abbruch",
+  "save": "Speichern"
 }
