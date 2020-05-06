@@ -1,12 +1,4 @@
 {
-  "$vuetify": {
-    "dataTable": {
-      "itemsPerPageText": "Rows per page:"
-    },
-    "dataFooter": {
-      "pageText": "{0}-{1} of {2}"
-    }
-  },
   "search": "Search",
   "newitem": "New item",
   "cancel": "Cancel",

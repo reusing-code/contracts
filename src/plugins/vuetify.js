@@ -1,11 +1,15 @@
 import Vue from "vue";
 import Vuetify from "vuetify/lib";
-import i18n from "./i18n.js";
 
 Vue.use(Vuetify);
 
+// translations
+import en from "vuetify/es5/locale/en";
+import de from "vuetify/es5/locale/de";
+
 export default new Vuetify({
   lang: {
-    t: (key, ...params) => i18n.t(key, params),
+    locales: { en, de },
+    current: "en",
   },
 });
