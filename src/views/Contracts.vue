@@ -13,7 +13,7 @@
             hide-details
           ></v-text-field>
           <v-spacer></v-spacer>
-          <v-dialog v-model="dialog" max-width="500px">
+          <v-dialog v-model="dialog" max-width="1000px">
             <template v-slot:activator="{ on }">
               <v-btn color="primary" dark class="mb-2" v-on="on">{{
                 $t("newitem")
@@ -55,18 +55,22 @@
                       <v-text-field
                         v-model="editedItem.extensionMonths"
                         :label="$t('contracts.extensionMonths')"
+                        type="number"
                       ></v-text-field>
                     </v-col>
                     <v-col cols="12" md="6">
                       <v-text-field
                         v-model="editedItem.noticePeriodMonths"
                         :label="$t('contracts.noticePeriodMonths')"
+                        type="number"
                       ></v-text-field>
                     </v-col>
                     <v-col cols="12" md="6">
                       <v-text-field
                         v-model="editedItem.pricePerMonth"
                         :label="$t('contracts.pricePerMonth')"
+                        suffix="€"
+                        type="number"
                       ></v-text-field>
                     </v-col>
                     <v-col cols="12" md="6">
@@ -93,11 +97,13 @@
                         :label="$t('contracts.paymentOption')"
                       ></v-text-field>
                     </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
+                    <v-col cols="12">
+                      <v-textarea
                         v-model="editedItem.notes"
                         :label="$t('contracts.notes')"
-                      ></v-text-field>
+                        auto-grow="true"
+                        rows="3"
+                      ></v-textarea>
                     </v-col>
                     <v-col cols="12" md="6">
                       <v-text-field
