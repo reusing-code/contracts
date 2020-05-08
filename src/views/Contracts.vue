@@ -40,16 +40,57 @@
                       ></v-text-field>
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="editedItem.start"
-                        :label="$t('contracts.start')"
-                      ></v-text-field>
+                      <v-menu
+                        v-model="startMenu"
+                        :close-on-content-click="false"
+                        transition="scale-transition"
+                        offset-y
+                        min-width="290px"
+                      >
+                        <template v-slot:activator="{ on }">
+                          <v-text-field
+                            v-model="editedItem.start"
+                            :label="$t('contracts.start')"
+                            prepend-icon="mdi-calendar"
+                            readonly
+                            v-on="on"
+                          ></v-text-field>
+                        </template>
+                        <v-date-picker
+                          ref="picker"
+                          v-model="editedItem.start"
+                          @input="startMenu = false"
+                          no-title
+                          scrollable
+                        >
+                        </v-date-picker>
+                      </v-menu>
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="editedItem.end"
-                        :label="$t('contracts.end')"
-                      ></v-text-field>
+                      <v-menu
+                        v-model="endMenu"
+                        :close-on-content-click="false"
+                        transition="scale-transition"
+                        offset-y
+                        min-width="290px"
+                      >
+                        <template v-slot:activator="{ on }">
+                          <v-text-field
+                            v-model="editedItem.end"
+                            :label="$t('contracts.end')"
+                            prepend-icon="mdi-calendar"
+                            readonly
+                            v-on="on"
+                          ></v-text-field>
+                        </template>
+                        <v-date-picker
+                          v-model="editedItem.end"
+                          @input="endMenu = false"
+                          no-title
+                          scrollable
+                        >
+                        </v-date-picker>
+                      </v-menu>
                     </v-col>
                     <v-col cols="12" md="6">
                       <v-text-field
@@ -101,7 +142,7 @@
                       <v-textarea
                         v-model="editedItem.notes"
                         :label="$t('contracts.notes')"
-                        auto-grow="true"
+                        auto-grow
                         rows="3"
                       ></v-textarea>
                     </v-col>
@@ -175,6 +216,8 @@ export default {
         name: "",
         value: "",
       },
+      startMenu: false,
+      endMenu: false,
     };
   },
   mounted() {
@@ -188,6 +231,12 @@ export default {
   watch: {
     dialog(val) {
       val || this.close();
+    },
+    startMenu(val) {
+      val && setTimeout(() => (this.$refs.picker.activePicker = "YEAR"));
+    },
+    endMenu(val) {
+      val && setTimeout(() => (this.$refs.picker.activePicker = "YEAR"));
     },
   },
 
