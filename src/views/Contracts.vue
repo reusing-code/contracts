@@ -40,57 +40,18 @@
                       ></v-text-field>
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-menu
-                        v-model="startMenu"
-                        :close-on-content-click="false"
-                        transition="scale-transition"
-                        offset-y
-                        min-width="290px"
-                      >
-                        <template v-slot:activator="{ on }">
-                          <v-text-field
-                            v-model="editedItem.start"
-                            :label="$t('contracts.start')"
-                            prepend-icon="mdi-calendar"
-                            readonly
-                            v-on="on"
-                          ></v-text-field>
-                        </template>
-                        <v-date-picker
-                          ref="picker"
-                          v-model="editedItem.start"
-                          @input="startMenu = false"
-                          no-title
-                          scrollable
-                        >
-                        </v-date-picker>
-                      </v-menu>
+                      <base-input
+                        v-model="editedItem.start"
+                        :label="$t('contracts.start')"
+                        type="date"
+                      ></base-input>
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-menu
-                        v-model="endMenu"
-                        :close-on-content-click="false"
-                        transition="scale-transition"
-                        offset-y
-                        min-width="290px"
-                      >
-                        <template v-slot:activator="{ on }">
-                          <v-text-field
-                            v-model="editedItem.end"
-                            :label="$t('contracts.end')"
-                            prepend-icon="mdi-calendar"
-                            readonly
-                            v-on="on"
-                          ></v-text-field>
-                        </template>
-                        <v-date-picker
-                          v-model="editedItem.end"
-                          @input="endMenu = false"
-                          no-title
-                          scrollable
-                        >
-                        </v-date-picker>
-                      </v-menu>
+                      <base-input
+                        v-model="editedItem.end"
+                        :label="$t('contracts.end')"
+                        type="date"
+                      ></base-input>
                     </v-col>
                     <v-col cols="12" md="6">
                       <v-text-field
@@ -107,18 +68,18 @@
                       ></v-text-field>
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field
+                      <base-input
                         v-model="editedItem.pricePerMonth"
                         :label="$t('contracts.pricePerMonth')"
-                        suffix="€"
-                        type="number"
-                      ></v-text-field>
+                        type="currency"
+                      ></base-input>
                     </v-col>
                     <v-col cols="12" md="6">
-                      <v-text-field
+                      <base-input
                         v-model="editedItem.contractNumber"
                         :label="$t('contracts.contractNumber')"
-                      ></v-text-field>
+                        type="string"
+                      ></base-input>
                     </v-col>
                     <v-col cols="12" md="6">
                       <v-text-field
@@ -139,12 +100,11 @@
                       ></v-text-field>
                     </v-col>
                     <v-col cols="12">
-                      <v-textarea
+                      <base-input
                         v-model="editedItem.notes"
                         :label="$t('contracts.notes')"
-                        auto-grow
-                        rows="3"
-                      ></v-textarea>
+                        type="text"
+                      ></base-input>
                     </v-col>
                     <v-col cols="12" md="6">
                       <v-text-field
@@ -196,28 +156,26 @@ export default {
         { text: "ID", value: "id" },
         { text: "Name", value: "name" },
         { text: "Value", value: "value" },
-        { text: "Actions", value: "actions", sortable: false },
+        { text: "Actions", value: "actions", sortable: false }
       ],
       contracts: [
         { id: 1, name: "bank", value: "abc" },
         { id: 2, name: "insurance", value: "def" },
         { id: 3, name: "mobile", value: "ghi" },
-        { id: 4, name: "car", value: "jkl" },
+        { id: 4, name: "car", value: "jkl" }
       ],
       dialog: false,
       editedIndex: -1,
       editedItem: {
         id: -1,
         name: "",
-        value: "",
+        value: ""
       },
       defaultItem: {
         id: -1,
         name: "",
-        value: "",
-      },
-      startMenu: false,
-      endMenu: false,
+        value: ""
+      }
     };
   },
   mounted() {
@@ -226,18 +184,12 @@ export default {
   computed: {
     formTitle() {
       return this.editedIndex === -1 ? this.$t("newitem") : this.$t("edititem");
-    },
+    }
   },
   watch: {
     dialog(val) {
       val || this.close();
-    },
-    startMenu(val) {
-      val && setTimeout(() => (this.$refs.picker.activePicker = "YEAR"));
-    },
-    endMenu(val) {
-      val && setTimeout(() => (this.$refs.picker.activePicker = "YEAR"));
-    },
+    }
   },
 
   methods: {
@@ -263,7 +215,7 @@ export default {
       if (this.editedIndex > -1) {
         Object.assign(this.contracts[this.editedIndex], this.editedItem);
       } else {
-        const maxID = Math.max(...this.contracts.map((c) => c.id), 0);
+        const maxID = Math.max(...this.contracts.map(c => c.id), 0);
         this.editedItem.id = maxID + 1;
         this.contracts.push(this.editedItem);
       }
@@ -282,8 +234,8 @@ export default {
           localStorage.removeItem("contracts");
         }
       }
-    },
-  },
+    }
+  }
 };
 </script>
 
