@@ -27,96 +27,17 @@
               <v-card-text>
                 <v-container>
                   <v-row>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="editedItem.company"
-                        :label="$t('contracts.company')"
-                      ></v-text-field>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="editedItem.product"
-                        :label="$t('contracts.product')"
-                      ></v-text-field>
-                    </v-col>
-                    <v-col cols="12" md="6">
+                    <v-col
+                      cols="12"
+                      md="6"
+                      v-for="field in fields.filter(x => x.type !== '')"
+                      :key="field.value"
+                    >
                       <base-input
-                        v-model="editedItem.start"
-                        :label="$t('contracts.start')"
-                        type="date"
+                        v-model="editedItem[field.value]"
+                        :label="$t('contracts.' + field.value)"
+                        :type="field.type"
                       ></base-input>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <base-input
-                        v-model="editedItem.end"
-                        :label="$t('contracts.end')"
-                        type="date"
-                      ></base-input>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="editedItem.extensionMonths"
-                        :label="$t('contracts.extensionMonths')"
-                        type="number"
-                      ></v-text-field>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="editedItem.noticePeriodMonths"
-                        :label="$t('contracts.noticePeriodMonths')"
-                        type="number"
-                      ></v-text-field>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <base-input
-                        v-model="editedItem.pricePerMonth"
-                        :label="$t('contracts.pricePerMonth')"
-                        type="currency"
-                      ></base-input>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <base-input
-                        v-model="editedItem.contractNumber"
-                        :label="$t('contracts.contractNumber')"
-                        type="string"
-                      ></base-input>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="editedItem.customerNumber"
-                        :label="$t('contracts.customerNumber')"
-                      ></v-text-field>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="editedItem.account"
-                        :label="$t('contracts.account')"
-                      ></v-text-field>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="editedItem.paymentOption"
-                        :label="$t('contracts.paymentOption')"
-                      ></v-text-field>
-                    </v-col>
-                    <v-col cols="12">
-                      <base-input
-                        v-model="editedItem.notes"
-                        :label="$t('contracts.notes')"
-                        type="text"
-                      ></base-input>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="editedItem.category"
-                        :label="$t('contracts.category')"
-                      ></v-text-field>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-text-field
-                        v-model="editedItem.status"
-                        :label="$t('contracts.status')"
-                      ></v-text-field>
                     </v-col>
                   </v-row>
                 </v-container>
@@ -152,11 +73,22 @@ export default {
   data() {
     return {
       search: "",
-      headers: [
-        { text: "ID", value: "id" },
-        { text: "Name", value: "name" },
-        { text: "Value", value: "value" },
-        { text: "Actions", value: "actions", sortable: false }
+      fields: [
+        { value: "id", type: "" },
+        { value: "company", type: "string" },
+        { value: "product", type: "string" },
+        { value: "start", type: "date" },
+        { value: "end", type: "date" },
+        { value: "extensionMonths", type: "number" },
+        { value: "noticePeriodMonths", type: "number" },
+        { value: "pricePerMonth", type: "currency" },
+        { value: "contractNumber", type: "string" },
+        { value: "customerNumber", type: "string" },
+        { value: "account", type: "string" },
+        { value: "paymentOption", type: "string" },
+        { value: "notes", type: "text" },
+        { value: "category", type: "" },
+        { value: "status", type: "" }
       ],
       contracts: [
         { id: 1, name: "bank", value: "abc" },
@@ -184,6 +116,16 @@ export default {
   computed: {
     formTitle() {
       return this.editedIndex === -1 ? this.$t("newitem") : this.$t("edititem");
+    },
+    headers() {
+      var res = this.fields
+        .filter(x => x.type !== "")
+        .map(x => ({
+          value: x.value,
+          text: this.$t("contracts." + x.value)
+        }));
+      res.push({ value: "actions", text: this.$t("actions") });
+      return res;
     }
   },
   watch: {
