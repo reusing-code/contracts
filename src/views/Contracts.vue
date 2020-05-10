@@ -30,7 +30,7 @@
                     <v-col
                       cols="12"
                       md="6"
-                      v-for="field in fields.filter(x => x.type !== '')"
+                      v-for="field in editableFields"
                       :key="field.value"
                     >
                       <base-input
@@ -126,6 +126,9 @@ export default {
         }));
       res.push({ value: "actions", text: this.$t("actions") });
       return res;
+    },
+    editableFields() {
+      return this.fields.filter(x => x.type !== "");
     }
   },
   watch: {
