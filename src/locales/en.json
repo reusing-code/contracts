@@ -13,7 +13,10 @@
     "paymentOption": "Payment options",
     "notes": "Notes",
     "category": "Category",
-    "status": "Status"
+    "status": "Status",
+    "active": "Active",
+    "cancelled": "Cancelled",
+    "ended": "Ended"
   },
   "search": "Search",
   "newitem": "New item",

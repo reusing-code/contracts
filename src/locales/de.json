@@ -13,7 +13,10 @@
     "paymentOption": "Zahlungsart",
     "notes": "Notizen",
     "category": "Kategorie",
-    "status": "Status"
+    "status": "Status",
+    "active": "Aktiv",
+    "cancelled": "Gekündigt",
+    "ended": "Beendet"
   },
   "search": "Suche",
   "newitem": "Neu",

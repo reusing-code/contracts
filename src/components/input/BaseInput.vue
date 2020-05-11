@@ -23,6 +23,13 @@
       clearable
     ></v-textarea>
   </div>
+  <div v-else-if="type == 'select'">
+    <v-select
+      v-model="internalValue"
+      :label="label"
+      :items="options.items"
+    ></v-select>
+  </div>
   <div v-else-if="type == 'currency'">
     <v-text-field
       v-model="internalValue"
@@ -64,7 +71,7 @@
 
 <script>
 export default {
-  props: ["value", "type", "label"],
+  props: ["value", "type", "label", "options"],
   data() {
     return {
       internalValue: this.value,

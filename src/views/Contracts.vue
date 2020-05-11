@@ -37,6 +37,7 @@
                         v-model="editedItem[field.value]"
                         :label="$t(i18nKey(field.value))"
                         :type="field.type"
+                        :options="addItemI18n(field.options)"
                       ></base-input>
                     </v-col>
                   </v-row>
@@ -96,7 +97,17 @@ export default {
         { value: "paymentOption", type: "string" },
         { value: "notes", type: "text" },
         { value: "category", type: "" },
-        { value: "status", type: "" },
+        {
+          value: "status",
+          type: "select",
+          options: {
+            items: [
+              { value: "active" },
+              { value: "cancelled" },
+              { value: "ended" },
+            ],
+          },
+        },
       ],
       contracts: [
         { id: 1, name: "bank", value: "abc" },
@@ -132,7 +143,6 @@ export default {
           value: x.value,
           text: this.$t(this.i18nKey(x.value)),
         }));
-      res.push({ value: "status", text: this.$t("contracts.status") });
       res.push({ value: "actions", text: this.$t("actions"), sortable: false });
       return res;
     },
@@ -195,14 +205,22 @@ export default {
     getColor(status) {
       switch (status) {
         case "active":
-          return "green";
+          return "green darken-3";
         case "cancelled":
-          return "darkred";
+          return "orange darken-3";
         case "ended":
-          return "red";
+          return "red darken-3";
         default:
           return "blue";
       }
+    },
+    addItemI18n(options) {
+      if (options && options.items) {
+        options.items.forEach(
+          (item) => (item.text = this.$t(this.i18nKey(item.value)))
+        );
+      }
+      return options;
     },
   },
 };
