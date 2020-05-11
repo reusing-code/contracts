@@ -35,7 +35,7 @@
                     >
                       <base-input
                         v-model="editedItem[field.value]"
-                        :label="$t('contracts.' + field.value)"
+                        :label="$t(i18nKey(field.value))"
                         :type="field.type"
                       ></base-input>
                     </v-col>
@@ -64,6 +64,14 @@
           mdi-delete
         </v-icon>
       </template>
+      <template v-slot:item.status="{ item }">
+        <base-tag
+          v-if="item.status && item.status != ''"
+          :color="getColor(item.status)"
+        >
+          {{ $t(i18nKey(item.status)) }}
+        </base-tag>
+      </template>
     </v-data-table>
   </v-card>
 </template>
@@ -88,26 +96,26 @@ export default {
         { value: "paymentOption", type: "string" },
         { value: "notes", type: "text" },
         { value: "category", type: "" },
-        { value: "status", type: "" }
+        { value: "status", type: "" },
       ],
       contracts: [
         { id: 1, name: "bank", value: "abc" },
         { id: 2, name: "insurance", value: "def" },
         { id: 3, name: "mobile", value: "ghi" },
-        { id: 4, name: "car", value: "jkl" }
+        { id: 4, name: "car", value: "jkl" },
       ],
       dialog: false,
       editedIndex: -1,
       editedItem: {
         id: -1,
         name: "",
-        value: ""
+        value: "",
       },
       defaultItem: {
         id: -1,
         name: "",
-        value: ""
-      }
+        value: "",
+      },
     };
   },
   mounted() {
@@ -119,22 +127,23 @@ export default {
     },
     headers() {
       var res = this.fields
-        .filter(x => x.type !== "")
-        .map(x => ({
+        .filter((x) => x.type !== "")
+        .map((x) => ({
           value: x.value,
-          text: this.$t("contracts." + x.value)
+          text: this.$t(this.i18nKey(x.value)),
         }));
-      res.push({ value: "actions", text: this.$t("actions") });
+      res.push({ value: "status", text: this.$t("contracts.status") });
+      res.push({ value: "actions", text: this.$t("actions"), sortable: false });
       return res;
     },
     editableFields() {
-      return this.fields.filter(x => x.type !== "");
-    }
+      return this.fields.filter((x) => x.type !== "");
+    },
   },
   watch: {
     dialog(val) {
       val || this.close();
-    }
+    },
   },
 
   methods: {
@@ -160,7 +169,7 @@ export default {
       if (this.editedIndex > -1) {
         Object.assign(this.contracts[this.editedIndex], this.editedItem);
       } else {
-        const maxID = Math.max(...this.contracts.map(c => c.id), 0);
+        const maxID = Math.max(...this.contracts.map((c) => c.id), 0);
         this.editedItem.id = maxID + 1;
         this.contracts.push(this.editedItem);
       }
@@ -179,8 +188,23 @@ export default {
           localStorage.removeItem("contracts");
         }
       }
-    }
-  }
+    },
+    i18nKey(label) {
+      return "contracts." + label;
+    },
+    getColor(status) {
+      switch (status) {
+        case "active":
+          return "green";
+        case "cancelled":
+          return "darkred";
+        case "ended":
+          return "red";
+        default:
+          return "blue";
+      }
+    },
+  },
 };
 </script>
 

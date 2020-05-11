@@ -1,14 +1,18 @@
 <template>
-  <v-chip color="primary" text-color="white">
-    <v-avatar left>
-      <v-icon>mdi-check-circle-outline</v-icon>
-    </v-avatar>
+  <v-chip :color="color" text-color="white">
     <slot></slot>
   </v-chip>
 </template>
 
 <script>
-export default {};
+export default {
+  props: {
+    color: {
+      type: String,
+      default: "primary",
+    },
+  },
+};
 </script>
 
 <style scoped></style>
