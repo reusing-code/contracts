@@ -68,7 +68,7 @@ export default {
   data() {
     return {
       internalValue: this.value,
-      menu: false
+      menu: false,
     };
   },
   watch: {
@@ -77,10 +77,9 @@ export default {
     },
     menu(val) {
       val && setTimeout(() => (this.$refs.picker.activePicker = "YEAR"));
-    }
-  }
+    },
+  },
 };
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

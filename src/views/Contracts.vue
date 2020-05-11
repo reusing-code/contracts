@@ -127,8 +127,8 @@ export default {
     },
     headers() {
       var res = this.fields
-        .filter((x) => x.type !== "")
-        .map((x) => ({
+        .filter(x => x.type !== "")
+        .map(x => ({
           value: x.value,
           text: this.$t(this.i18nKey(x.value)),
         }));
@@ -137,7 +137,7 @@ export default {
       return res;
     },
     editableFields() {
-      return this.fields.filter((x) => x.type !== "");
+      return this.fields.filter(x => x.type !== "");
     },
   },
   watch: {
@@ -169,7 +169,7 @@ export default {
       if (this.editedIndex > -1) {
         Object.assign(this.contracts[this.editedIndex], this.editedItem);
       } else {
-        const maxID = Math.max(...this.contracts.map((c) => c.id), 0);
+        const maxID = Math.max(...this.contracts.map(c => c.id), 0);
         this.editedItem.id = maxID + 1;
         this.contracts.push(this.editedItem);
       }
