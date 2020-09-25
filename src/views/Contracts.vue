@@ -105,6 +105,7 @@ export default {
               { value: "active" },
               { value: "cancelled" },
               { value: "ended" },
+              { value: "planned" },
             ],
           },
         },
@@ -137,7 +138,7 @@ export default {
       return this.editedIndex === -1 ? this.$t("newitem") : this.$t("edititem");
     },
     headers() {
-      var res = this.fields
+      const res = this.fields
         .filter((x) => x.type !== "")
         .map((x) => ({
           value: x.value,

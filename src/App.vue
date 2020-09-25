@@ -23,11 +23,11 @@
       <v-toolbar-title>Contracts</v-toolbar-title>
     </v-app-bar>
 
-    <v-content>
+    <v-main>
       <v-container>
         <router-view></router-view>
       </v-container>
-    </v-content>
+    </v-main>
 
     <v-footer app>
       <v-spacer></v-spacer>
@@ -49,11 +49,10 @@ export default {
       navItems: [
         { title: "Home", icon: "mdi-home", link: "/" },
         { title: "About", icon: "mdi-corn", link: "/about" },
-        { title: "Contracts", icon: "mdi-file-cabinet", link: "/contracts" },
-        { title: "Test", icon: "mdi-square-edit-outline", link: "/test" },
-      ],
+        { title: "Contracts", icon: "mdi-file-cabinet", link: "/contracts" }
+      ]
     };
-  },
+  }
 };
 </script>
 

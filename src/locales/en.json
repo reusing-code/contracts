@@ -16,7 +16,8 @@
     "status": "Status",
     "active": "Active",
     "cancelled": "Cancelled",
-    "ended": "Ended"
+    "ended": "Ended",
+    "planned": "Planned"
   },
   "search": "Search",
   "newitem": "New item",

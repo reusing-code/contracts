@@ -1,41 +1,36 @@
 <template>
   <div v-if="type == 'string'">
-    <v-text-field
-      v-model="internalValue"
-      :label="label"
-      clearable
-    ></v-text-field>
+    <v-text-field :value="value" :label="label" clearable></v-text-field>
   </div>
   <div v-else-if="type == 'number'">
     <v-text-field
-      v-model="internalValue"
+      :value="value"
       :label="label"
       type="number"
+      @input="updateValue"
       clearable
     ></v-text-field>
   </div>
   <div v-else-if="type == 'text'">
     <v-textarea
-      v-model="internalValue"
+      :value="value"
       :label="label"
       auto-grow
       rows="3"
+      @input="updateValue"
       clearable
     ></v-textarea>
   </div>
   <div v-else-if="type == 'select'">
-    <v-select
-      v-model="internalValue"
-      :label="label"
-      :items="options.items"
-    ></v-select>
+    <v-select :value="value" :label="label" :items="options.items"></v-select>
   </div>
   <div v-else-if="type == 'currency'">
     <v-text-field
-      v-model="internalValue"
+      :value="value"
       :label="label"
       type="number"
       suffix="€"
+      @input="updateValue"
       clearable
     ></v-text-field>
   </div>
@@ -49,18 +44,19 @@
     >
       <template v-slot:activator="{ on }">
         <v-text-field
-          v-model="internalValue"
+          :value="value"
           :label="label"
           prepend-icon="mdi-calendar"
           readonly
           v-on="on"
+          @input="updateValue"
           clearable
         ></v-text-field>
       </template>
       <v-date-picker
         ref="picker"
-        v-model="internalValue"
-        @input="menu = false"
+        :value="value"
+        @input="updateValue"
         no-title
         scrollable
       >
@@ -74,18 +70,20 @@ export default {
   props: ["value", "type", "label", "options"],
   data() {
     return {
-      internalValue: this.value,
-      menu: false,
+      menu: false
     };
   },
   watch: {
-    internalValue(val) {
-      this.$emit("input", val);
-    },
     menu(val) {
       val && setTimeout(() => (this.$refs.picker.activePicker = "YEAR"));
-    },
+    }
   },
+  methods: {
+    updateValue(val) {
+      this.menu = false;
+      this.$emit("input", val);
+    }
+  }
 };
 </script>
 
