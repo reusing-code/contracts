@@ -78,6 +78,7 @@
 </template>
 
 <script>
+import ContractsDataService from "@/services/ContractsDataService";
 export default {
   data() {
     return {
@@ -132,6 +133,9 @@ export default {
   },
   mounted() {
     this.loadPersisted();
+    ContractsDataService.getAll().then((response) => {
+      console.log(response.data);
+    });
   },
   computed: {
     formTitle() {

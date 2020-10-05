@@ -1,19 +1,21 @@
-import http from '@/http-common'
+import http from "@/http-common";
 
 class ContractsDataService {
   getAll() {
-    return http.get('/contracts')
+    return http.get("/contracts");
   }
   get(id: string) {
-    return http.get(`/contracts/${id}`)
+    return http.get(`/contracts/${id}`);
   }
   create(data: any) {
-    return http.post('/tutorials', data)
+    return http.post("/tutorials", data);
   }
   update(id: string, data: any) {
-    return http.put(`/contracts/${id}`, data)
+    return http.put(`/contracts/${id}`, data);
   }
   delete(id: string) {
-    return http.delete(`/contracts/${id}`)
+    return http.delete(`/contracts/${id}`);
   }
 }
+
+export default new ContractsDataService();
