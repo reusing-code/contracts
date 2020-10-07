@@ -1,6 +1,11 @@
 <template>
   <div v-if="type == 'string'">
-    <v-text-field :value="value" :label="label" clearable></v-text-field>
+    <v-text-field
+      :value="value"
+      :label="label"
+      @input="updateValue"
+      clearable
+    ></v-text-field>
   </div>
   <div v-else-if="type == 'number'">
     <v-text-field
@@ -22,7 +27,12 @@
     ></v-textarea>
   </div>
   <div v-else-if="type == 'select'">
-    <v-select :value="value" :label="label" :items="options.items"></v-select>
+    <v-select
+      :value="value"
+      :label="label"
+      :items="options.items"
+      @input="updateValue"
+    ></v-select>
   </div>
   <div v-else-if="type == 'currency'">
     <v-text-field
@@ -70,20 +80,20 @@ export default {
   props: ["value", "type", "label", "options"],
   data() {
     return {
-      menu: false
+      menu: false,
     };
   },
   watch: {
     menu(val) {
       val && setTimeout(() => (this.$refs.picker.activePicker = "YEAR"));
-    }
+    },
   },
   methods: {
     updateValue(val) {
       this.menu = false;
       this.$emit("input", val);
-    }
-  }
+    },
+  },
 };
 </script>
 
