@@ -11,7 +11,11 @@ import "./components/_globals";
 
 Vue.config.productionTip = false;
 
-if (process.env.NODE_ENV === "development") {
+if (
+  process.env.NODE_ENV === "development" &&
+  (process.env.VUE_APP_API_ENDPOINT !== undefined ||
+    process.env.VUE_APP_API_ENDPOINT !== "")
+) {
   makeServer();
 }
 
