@@ -3,8 +3,6 @@ import { Model, Server } from "miragejs";
 const mockContractData = [
   {
     id: 1,
-    name: "",
-    value: "",
     start: "2018-05-16",
     end: "2021-05-15",
     extensionMonths: "12",
@@ -21,8 +19,6 @@ const mockContractData = [
   },
   {
     id: 2,
-    name: "",
-    value: "",
     company: "Telco",
     product: "Landline500",
     start: "2020-12-01",
@@ -39,8 +35,6 @@ const mockContractData = [
   },
   {
     id: 3,
-    name: "",
-    value: "",
     company: "Insurance Corp",
     product: "Verhicle insurance XXL",
     start: "2006-04-02",
@@ -57,8 +51,6 @@ const mockContractData = [
   },
   {
     id: 4,
-    name: "",
-    value: "",
     company: "Big Bank",
     product: "Mega Account",
     start: "1980-01-01",
