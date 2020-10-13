@@ -4,16 +4,16 @@ class ContractsDataService {
   getAll() {
     return http.get("/contracts");
   }
-  get(id: string) {
+  get(id: number) {
     return http.get(`/contracts/${id}`);
   }
   create(data: any) {
-    return http.post("/tutorials", data);
+    return http.post("/contracts", data);
   }
-  update(id: string, data: any) {
-    return http.put(`/contracts/${id}`, data);
+  update(data: any) {
+    return http.put(`/contracts/${data.id}`, data);
   }
-  delete(id: string) {
+  delete(id: number) {
     return http.delete(`/contracts/${id}`);
   }
 }

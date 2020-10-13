@@ -85,6 +85,28 @@ export function makeServer({ environment = "development" } = {}) {
       this.get("/contracts", (schema) => {
         return schema.contracts.all();
       });
+
+      this.post("/contracts", (schema, request) => {
+        const data = JSON.parse(request.requestBody);
+        const contracts = schema.contracts.all().models;
+        const maxID = Math.max(...contracts.map((c) => c.id), 0);
+        data.id = maxID + 1;
+        schema.contracts.create(data);
+      });
+
+      this.delete("/contracts/:id", (schema, request) => {
+        const id = request.params.id;
+
+        return schema.contracts.find(id).destroy();
+      });
+
+      this.put("/contracts/:id", (schema, request) => {
+        const id = request.params.id;
+
+        return schema.contracts
+          .find(id)
+          .update(JSON.parse(request.requestBody));
+      });
     },
   });
 

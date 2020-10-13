@@ -132,10 +132,7 @@ export default {
     };
   },
   mounted() {
-    this.loadPersisted();
-    ContractsDataService.getAll().then((response) => {
-      console.log(response.data);
-    });
+    this.fetchAllContracts();
   },
   computed: {
     formTitle() {
@@ -169,9 +166,10 @@ export default {
     },
     deleteItem(item) {
       const index = this.contracts.indexOf(item);
-      confirm("Are you sure you want to delete this item?") &&
-        this.contracts.splice(index, 1);
-      this.persistLocally();
+      if (confirm("Are you sure you want to delete this item?")) {
+        ContractsDataService.delete(item.id);
+        this.fetchAllContracts();
+      }
     },
     close() {
       this.dialog = false;
@@ -182,27 +180,18 @@ export default {
     },
     save() {
       if (this.editedIndex > -1) {
-        Object.assign(this.contracts[this.editedIndex], this.editedItem);
+        ContractsDataService.update(this.editedItem);
       } else {
-        const maxID = Math.max(...this.contracts.map((c) => c.id), 0);
-        this.editedItem.id = maxID + 1;
-        this.contracts.push(this.editedItem);
+        ContractsDataService.create(this.editedItem);
       }
-      this.persistLocally();
+      this.fetchAllContracts();
       this.close();
     },
-    persistLocally() {
-      const parsed = JSON.stringify(this.contracts);
-      localStorage.setItem("contracts", parsed);
-    },
-    loadPersisted() {
-      if (localStorage.getItem("contracts")) {
-        try {
-          this.contracts = JSON.parse(localStorage.getItem("contracts"));
-        } catch (e) {
-          localStorage.removeItem("contracts");
-        }
-      }
+    fetchAllContracts() {
+      ContractsDataService.getAll().then((response) => {
+        console.log("Fetched contracts:", response.data);
+        this.contracts = response.data.contracts;
+      });
     },
     i18nKey(label) {
       return "contracts." + label;
