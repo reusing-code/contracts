@@ -1,0 +1,29 @@
+{
+  "contracts": {
+    "company": "Company",
+    "product": "Product",
+    "start": "Start date",
+    "end": "Scheduled end date",
+    "extensionMonths": "Extension period (months)",
+    "noticePeriodMonths": "Notice period (months)",
+    "pricePerMonth": "Price per month",
+    "contractNumber": "Contract number",
+    "customerNumber": "Customer number",
+    "account": "Account credentials",
+    "paymentOption": "Payment options",
+    "notes": "Notes",
+    "category": "Category",
+    "status": "Status",
+    "active": "Active",
+    "cancelled": "Cancelled",
+    "ended": "Ended",
+    "planned": "Planned"
+  },
+  "search": "Search",
+  "newitem": "New item",
+  "edititem": "Edit item",
+  "ok": "OK",
+  "cancel": "Cancel",
+  "save": "Save",
+  "actions": "Actions"
+}
