@@ -1,0 +1,74 @@
+{
+  "app": {
+    "title": "Contracts"
+  },
+  "nav": {
+    "language": "Language",
+    "en": "English",
+    "de": "Deutsch"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "newCategory": "New Category",
+    "noCategories": "No categories yet. Create one to get started.",
+    "contractCount_one": "{{count}} contract",
+    "contractCount_other": "{{count}} contracts",
+    "monthlyTotal": "{{amount}} / month"
+  },
+  "category": {
+    "create": "Create Category",
+    "edit": "Edit Category",
+    "delete": "Delete Category",
+    "deleteConfirm": "This will permanently delete the category \"{{name}}\" and all its contracts.",
+    "name": "Name",
+    "namePlaceholder": "e.g. Insurance",
+    "created": "Category created.",
+    "updated": "Category updated.",
+    "deleted": "Category deleted."
+  },
+  "contract": {
+    "create": "Add Contract",
+    "edit": "Edit Contract",
+    "delete": "Delete Contract",
+    "deleteConfirm": "This will permanently delete the contract \"{{name}}\".",
+    "noContracts": "No contracts in this category yet.",
+    "expired": "Expired",
+    "cancellationDate": "Earliest cancellation",
+    "active": "Active",
+    "created": "Contract created.",
+    "updated": "Contract updated.",
+    "deleted": "Contract deleted.",
+    "backToDashboard": "Dashboard",
+    "links": "Links"
+  },
+  "fields": {
+    "name": "Contract Name",
+    "productName": "Product",
+    "company": "Company",
+    "contractNumber": "Contract No.",
+    "customerNumber": "Customer No.",
+    "pricePerMonth": "Price / Month",
+    "startDate": "Start Date",
+    "endDate": "End Date (Cancelled)",
+    "minimumDuration": "Min. Duration (Months)",
+    "extensionDuration": "Extension (Months)",
+    "noticePeriod": "Notice Period (Months)",
+    "customerPortalUrl": "Customer Portal URL",
+    "paperlessUrl": "Paperless URL",
+    "comments": "Comments"
+  },
+  "categoryNames": {
+    "insurance": "Insurance",
+    "banking": "Banking / Portfolios",
+    "telecommunications": "Telecommunications"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "actions": "Actions",
+    "confirm": "Are you sure?",
+    "currency": "€"
+  }
+}
