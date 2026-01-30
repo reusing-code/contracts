@@ -1,0 +1,117 @@
+package server
+
+import (
+	"context"
+	"fmt"
+	"io/fs"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/tobi/contracts/backend/internal/config"
+	"github.com/tobi/contracts/backend/internal/handler"
+	"github.com/tobi/contracts/backend/internal/middleware"
+	"github.com/tobi/contracts/backend/internal/store"
+)
+
+type Server struct {
+	cfg    config.Config
+	logger *slog.Logger
+	store  store.Store
+}
+
+func New(cfg config.Config, logger *slog.Logger, s store.Store) *Server {
+	return &Server{cfg: cfg, logger: logger, store: s}
+}
+
+func (s *Server) Run() error {
+	h := handler.New(s.store, s.logger)
+	mux := http.NewServeMux()
+
+	// Health + metrics
+	mux.HandleFunc("GET /healthz", h.Healthz)
+	mux.HandleFunc("GET /readyz", h.Readyz)
+	mux.Handle("GET /metrics", promhttp.Handler())
+
+	// Category routes
+	mux.HandleFunc("GET /api/v1/categories", h.ListCategories)
+	mux.HandleFunc("POST /api/v1/categories", h.CreateCategory)
+	mux.HandleFunc("GET /api/v1/categories/{id}", h.GetCategory)
+	mux.HandleFunc("PUT /api/v1/categories/{id}", h.UpdateCategory)
+	mux.HandleFunc("DELETE /api/v1/categories/{id}", h.DeleteCategory)
+
+	// Contract routes nested under categories
+	mux.HandleFunc("GET /api/v1/categories/{id}/contracts", h.ListContractsByCategory)
+	mux.HandleFunc("POST /api/v1/categories/{id}/contracts", h.CreateContractInCategory)
+
+	// Contract routes
+	mux.HandleFunc("GET /api/v1/contracts", h.ListContracts)
+	mux.HandleFunc("GET /api/v1/contracts/{id}", h.GetContract)
+	mux.HandleFunc("PUT /api/v1/contracts/{id}", h.UpdateContract)
+	mux.HandleFunc("DELETE /api/v1/contracts/{id}", h.DeleteContract)
+
+	// SPA static files
+	if s.cfg.StaticDir != "" {
+		mux.Handle("/", spaHandler(s.cfg.StaticDir))
+	}
+
+	chain := middleware.Chain(mux,
+		middleware.RequestID,
+		middleware.Recovery(s.logger),
+		middleware.Metrics,
+		middleware.Logging(s.logger),
+		middleware.CORS(s.cfg.CORSOrigin),
+	)
+
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%d", s.cfg.Port),
+		Handler: chain,
+	}
+
+	errCh := make(chan error, 1)
+	go func() {
+		s.logger.Info("server starting", "port", s.cfg.Port, "environment", s.cfg.Environment)
+		errCh <- srv.ListenAndServe()
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case err := <-errCh:
+		return err
+	case sig := <-quit:
+		s.logger.Info("shutting down", "signal", sig)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return srv.Shutdown(ctx)
+}
+
+func spaHandler(dir string) http.Handler {
+	fsys := os.DirFS(dir)
+	fileServer := http.FileServer(http.FS(fsys))
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := strings.TrimPrefix(r.URL.Path, "/")
+		if path == "" {
+			path = "index.html"
+		}
+
+		// Try to serve the file directly
+		if _, err := fs.Stat(fsys, path); err == nil {
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+
+		// Fall back to index.html for SPA routing
+		r.URL.Path = "/"
+		fileServer.ServeHTTP(w, r)
+	})
+}

@@ -1,0 +1,27 @@
+version: "3"
+
+vars:
+  BINARY: server
+
+tasks:
+  dev:
+    desc: Run with Air (live reload)
+    env:
+      CORS_ORIGIN: "http://localhost:5173"
+    cmds:
+      - air
+
+  build:
+    desc: Build the binary
+    cmds:
+      - go build -o {{.BINARY}} ./cmd/server
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test ./...
+
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - golangci-lint run ./...

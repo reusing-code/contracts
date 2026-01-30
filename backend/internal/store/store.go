@@ -1,0 +1,25 @@
+package store
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+	"github.com/tobi/contracts/backend/internal/model"
+)
+
+type Store interface {
+	ListCategories(ctx context.Context, userID string) ([]model.Category, error)
+	GetCategory(ctx context.Context, userID string, id uuid.UUID) (model.Category, error)
+	CreateCategory(ctx context.Context, userID string, c model.Category) error
+	UpdateCategory(ctx context.Context, userID string, c model.Category) error
+	DeleteCategory(ctx context.Context, userID string, id uuid.UUID) error
+
+	ListContracts(ctx context.Context, userID string) ([]model.Contract, error)
+	ListContractsByCategory(ctx context.Context, userID string, categoryID uuid.UUID) ([]model.Contract, error)
+	GetContract(ctx context.Context, userID string, id uuid.UUID) (model.Contract, error)
+	CreateContract(ctx context.Context, userID string, c model.Contract) error
+	UpdateContract(ctx context.Context, userID string, c model.Contract) error
+	DeleteContract(ctx context.Context, userID string, id uuid.UUID) error
+
+	Close() error
+}

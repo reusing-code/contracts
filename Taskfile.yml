@@ -1,0 +1,35 @@
+version: "3"
+
+tasks:
+  dev:
+    desc: Run backend and frontend concurrently
+    deps:
+      - dev:backend
+      - dev:frontend
+
+  dev:backend:
+    desc: Run backend with Air
+    dir: backend
+    cmds:
+      - task dev
+
+  dev:frontend:
+    desc: Run frontend dev server
+    dir: frontend
+    cmds:
+      - bun run dev
+
+  build:
+    desc: Build Docker image
+    cmds:
+      - docker build -t contracts .
+
+  up:
+    desc: Start with docker compose
+    cmds:
+      - docker compose up -d
+
+  down:
+    desc: Stop docker compose
+    cmds:
+      - docker compose down
