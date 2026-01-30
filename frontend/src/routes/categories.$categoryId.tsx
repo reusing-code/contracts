@@ -1,8 +1,8 @@
 import { useState } from "react"
-import { createRoute, Link } from "@tanstack/react-router"
+import { createRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { ArrowLeft, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import { rootRoute } from "./__root"
 import { useCategoryContracts, useCreateContract, useUpdateContract, useDeleteContract } from "@/hooks/use-contracts"
 import { getCategoryById } from "@/lib/category-repository"
@@ -59,11 +59,6 @@ function CategoryDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link to="/">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
         <h1 className="text-2xl font-bold">
           {category ? (category.nameKey ? t(category.nameKey) : category.name) : "..."}
         </h1>

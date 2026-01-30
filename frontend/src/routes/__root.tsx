@@ -1,6 +1,7 @@
 import { createRootRoute, Outlet, Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { Sidebar } from "@/components/sidebar"
 import { seedDefaults } from "@/lib/seed"
 
 export const rootRoute = createRootRoute({
@@ -14,18 +15,21 @@ function RootLayout() {
   const { t } = useTranslation()
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex min-h-screen flex-col bg-background">
       <header className="border-b">
-        <div className="container mx-auto flex h-14 items-center justify-between px-4">
+        <div className="flex h-14 items-center justify-between px-4">
           <Link to="/" className="text-lg font-semibold">
             {t("app.title")}
           </Link>
           <LanguageSwitcher />
         </div>
       </header>
-      <main className="container mx-auto px-4 py-6">
-        <Outlet />
-      </main>
+      <div className="flex flex-1">
+        <Sidebar />
+        <main className="flex-1 px-6 py-6">
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }

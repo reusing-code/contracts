@@ -3,6 +3,8 @@
     "title": "Verträge"
   },
   "nav": {
+    "dashboard": "Dashboard",
+    "categories": "Kategorien",
     "language": "Sprache",
     "en": "English",
     "de": "Deutsch"
