@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "@tanstack/react-router"
 import { MoreVertical } from "lucide-react"
 import type { Category } from "@/types/category"
-import type { Contract } from "@/types/contract"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,16 +13,15 @@ import {
 
 interface CategoryCardProps {
   category: Category
-  contracts: Contract[]
+  contractCount: number
+  monthlyTotal: number
   onEdit: () => void
   onDelete: () => void
 }
 
-export function CategoryCard({ category, contracts, onEdit, onDelete }: CategoryCardProps) {
+export function CategoryCard({ category, contractCount, monthlyTotal, onEdit, onDelete }: CategoryCardProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-
-  const monthlyTotal = contracts.reduce((sum, c) => sum + (c.pricePerMonth ?? 0), 0)
 
   return (
     <Card
@@ -50,7 +48,7 @@ export function CategoryCard({ category, contracts, onEdit, onDelete }: Category
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">
-          {t("dashboard.contractCount", { count: contracts.length })}
+          {t("dashboard.contractCount", { count: contractCount })}
         </p>
         {monthlyTotal > 0 && (
           <p className="text-sm font-medium mt-1">

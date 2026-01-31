@@ -10,6 +10,7 @@ services:
       - LOG_FORMAT=json
       - LOG_LEVEL=info
       - ENVIRONMENT=production
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env or environment}
 
 volumes:
   app-data:

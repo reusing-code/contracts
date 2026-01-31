@@ -3,7 +3,6 @@ import { format } from "date-fns"
 import { ExternalLink, FileText, MoreVertical } from "lucide-react"
 import type { Contract } from "@/types/contract"
 import { contractFields } from "@/config/contract-fields"
-import { getEarliestCancellationDate, isExpired } from "@/lib/contract-utils"
 import {
   Table,
   TableBody,
@@ -65,18 +64,16 @@ export function ContractsTable({ contracts, onEdit, onDelete }: ContractsTablePr
             </TableRow>
           ) : (
             contracts.map((contract) => {
-              const expired = isExpired(contract)
-              const cancellation = getEarliestCancellationDate(contract)
               return (
-                <TableRow key={contract.id} className={expired ? "opacity-50" : undefined}>
+                <TableRow key={contract.id} className={contract.expired ? "opacity-50" : undefined}>
                   {tableColumns.map((col) => (
                     <TableCell key={col.key}>{formatCellValue(contract, col.key, currency)}</TableCell>
                   ))}
                   <TableCell>
-                    {expired ? (
+                    {contract.expired ? (
                       <Badge variant="secondary">{t("contract.expired")}</Badge>
-                    ) : cancellation ? (
-                      format(cancellation, "yyyy-MM-dd")
+                    ) : contract.cancellationDate ? (
+                      contract.cancellationDate
                     ) : (
                       "-"
                     )}

@@ -64,6 +64,19 @@
     "banking": "Banking / Portfolios",
     "telecommunications": "Telekommunikation"
   },
+  "auth": {
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "email": "E-Mail",
+    "emailPlaceholder": "du@beispiel.de",
+    "password": "Passwort",
+    "passwordPlaceholder": "Passwort eingeben",
+    "loginTitle": "In dein Konto einloggen",
+    "registerTitle": "Konto erstellen",
+    "switchToRegister": "Kein Konto? Registrieren",
+    "switchToLogin": "Bereits ein Konto? Anmelden",
+    "logout": "Abmelden"
+  },
   "common": {
     "save": "Speichern",
     "cancel": "Abbrechen",

@@ -10,15 +10,14 @@ import (
 	"github.com/tobi/contracts/backend/internal/store"
 )
 
-const defaultUserID = "00000000-0000-0000-0000-000000000000"
-
 type Handler struct {
-	store  store.Store
-	logger *slog.Logger
+	store     store.Store
+	logger    *slog.Logger
+	jwtSecret []byte
 }
 
-func New(s store.Store, logger *slog.Logger) *Handler {
-	return &Handler{store: s, logger: logger}
+func New(s store.Store, logger *slog.Logger, jwtSecret []byte) *Handler {
+	return &Handler{store: s, logger: logger, jwtSecret: jwtSecret}
 }
 
 func (h *Handler) writeJSON(w http.ResponseWriter, status int, v any) {

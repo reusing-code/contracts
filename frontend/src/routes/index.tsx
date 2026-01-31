@@ -5,7 +5,7 @@ import { toast } from "sonner"
 import { Plus } from "lucide-react"
 import { rootRoute } from "./__root"
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/use-categories"
-import { getAllContracts } from "@/lib/contract-repository"
+import { getSummary } from "@/lib/contract-repository"
 import { useQuery } from "@tanstack/react-query"
 import type { Category, CategoryFormData } from "@/types/category"
 import { Button } from "@/components/ui/button"
@@ -22,10 +22,13 @@ export const indexRoute = createRoute({
 function DashboardPage() {
   const { t } = useTranslation()
   const { data: categories = [] } = useCategories()
-  const { data: allContracts = [] } = useQuery({
-    queryKey: ["contracts-all"],
-    queryFn: getAllContracts,
+  const { data: summary } = useQuery({
+    queryKey: ["summary"],
+    queryFn: getSummary,
   })
+  const summaryByCategory = new Map(
+    (summary?.categories ?? []).map((s) => [s.id, s]),
+  )
   const createCategory = useCreateCategory()
   const updateCategory = useUpdateCategory()
   const deleteCategory = useDeleteCategory()
@@ -73,7 +76,8 @@ function DashboardPage() {
             <CategoryCard
               key={cat.id}
               category={cat}
-              contracts={allContracts.filter((c) => c.categoryId === cat.id)}
+              contractCount={summaryByCategory.get(cat.id)?.contractCount ?? 0}
+              monthlyTotal={summaryByCategory.get(cat.id)?.monthlyTotal ?? 0}
               onEdit={() => {
                 setEditingCategory(cat)
               }}

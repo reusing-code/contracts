@@ -1,0 +1,504 @@
+package handler
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"log/slog"
+
+	"github.com/google/uuid"
+	"github.com/tobi/contracts/backend/internal/middleware"
+	"github.com/tobi/contracts/backend/internal/model"
+	"github.com/tobi/contracts/backend/internal/store"
+)
+
+// mockStore implements store.Store in memory for handler tests.
+type mockStore struct {
+	categories map[uuid.UUID]model.Category
+	contracts  map[uuid.UUID]model.Contract
+	users      map[string]model.User // keyed by email
+}
+
+func newMockStore() *mockStore {
+	return &mockStore{
+		categories: make(map[uuid.UUID]model.Category),
+		contracts:  make(map[uuid.UUID]model.Contract),
+		users:      make(map[string]model.User),
+	}
+}
+
+func (m *mockStore) CreateUser(_ context.Context, u model.User) error {
+	if _, ok := m.users[u.Email]; ok {
+		return store.ErrConflict
+	}
+	m.users[u.Email] = u
+	return nil
+}
+
+func (m *mockStore) GetUserByEmail(_ context.Context, email string) (model.User, error) {
+	u, ok := m.users[email]
+	if !ok {
+		return u, store.ErrNotFound
+	}
+	return u, nil
+}
+
+func (m *mockStore) ListCategories(_ context.Context, _ string) ([]model.Category, error) {
+	out := make([]model.Category, 0, len(m.categories))
+	for _, c := range m.categories {
+		out = append(out, c)
+	}
+	return out, nil
+}
+
+func (m *mockStore) GetCategory(_ context.Context, _ string, id uuid.UUID) (model.Category, error) {
+	c, ok := m.categories[id]
+	if !ok {
+		return c, store.ErrNotFound
+	}
+	return c, nil
+}
+
+func (m *mockStore) CreateCategory(_ context.Context, _ string, c model.Category) error {
+	m.categories[c.ID] = c
+	return nil
+}
+
+func (m *mockStore) UpdateCategory(_ context.Context, _ string, c model.Category) error {
+	if _, ok := m.categories[c.ID]; !ok {
+		return store.ErrNotFound
+	}
+	m.categories[c.ID] = c
+	return nil
+}
+
+func (m *mockStore) DeleteCategory(_ context.Context, _ string, id uuid.UUID) error {
+	if _, ok := m.categories[id]; !ok {
+		return store.ErrNotFound
+	}
+	delete(m.categories, id)
+	return nil
+}
+
+func (m *mockStore) ListContracts(_ context.Context, _ string) ([]model.Contract, error) {
+	out := make([]model.Contract, 0, len(m.contracts))
+	for _, c := range m.contracts {
+		out = append(out, c)
+	}
+	return out, nil
+}
+
+func (m *mockStore) ListContractsByCategory(_ context.Context, _ string, catID uuid.UUID) ([]model.Contract, error) {
+	var out []model.Contract
+	for _, c := range m.contracts {
+		if c.CategoryID == catID {
+			out = append(out, c)
+		}
+	}
+	if out == nil {
+		out = []model.Contract{}
+	}
+	return out, nil
+}
+
+func (m *mockStore) GetContract(_ context.Context, _ string, id uuid.UUID) (model.Contract, error) {
+	c, ok := m.contracts[id]
+	if !ok {
+		return c, store.ErrNotFound
+	}
+	return c, nil
+}
+
+func (m *mockStore) CreateContract(_ context.Context, _ string, c model.Contract) error {
+	m.contracts[c.ID] = c
+	return nil
+}
+
+func (m *mockStore) UpdateContract(_ context.Context, _ string, c model.Contract) error {
+	if _, ok := m.contracts[c.ID]; !ok {
+		return store.ErrNotFound
+	}
+	m.contracts[c.ID] = c
+	return nil
+}
+
+func (m *mockStore) DeleteContract(_ context.Context, _ string, id uuid.UUID) error {
+	if _, ok := m.contracts[id]; !ok {
+		return store.ErrNotFound
+	}
+	delete(m.contracts, id)
+	return nil
+}
+
+func (m *mockStore) Close() error { return nil }
+
+var testJWTSecret = []byte("test-secret-key")
+
+const testUserID = "00000000-0000-0000-0000-000000000001"
+
+func newTestHandler() (*Handler, *mockStore) {
+	ms := newMockStore()
+	h := New(ms, slog.Default(), testJWTSecret)
+	return h, ms
+}
+
+
+func newMux(h *Handler) http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/v1/categories", h.ListCategories)
+	mux.HandleFunc("POST /api/v1/categories", h.CreateCategory)
+	mux.HandleFunc("GET /api/v1/categories/{id}", h.GetCategory)
+	mux.HandleFunc("PUT /api/v1/categories/{id}", h.UpdateCategory)
+	mux.HandleFunc("DELETE /api/v1/categories/{id}", h.DeleteCategory)
+	mux.HandleFunc("GET /api/v1/categories/{id}/contracts", h.ListContractsByCategory)
+	mux.HandleFunc("POST /api/v1/categories/{id}/contracts", h.CreateContractInCategory)
+	mux.HandleFunc("GET /api/v1/contracts/upcoming-renewals", h.UpcomingRenewals)
+	mux.HandleFunc("GET /api/v1/contracts", h.ListContracts)
+	mux.HandleFunc("GET /api/v1/contracts/{id}", h.GetContract)
+	mux.HandleFunc("PUT /api/v1/contracts/{id}", h.UpdateContract)
+	mux.HandleFunc("DELETE /api/v1/contracts/{id}", h.DeleteContract)
+	mux.HandleFunc("GET /api/v1/summary", h.Summary)
+	// Inject test user into context for all requests
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := middleware.SetUserID(r.Context(), testUserID)
+		mux.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func jsonBody(v any) *bytes.Buffer {
+	b, _ := json.Marshal(v)
+	return bytes.NewBuffer(b)
+}
+
+func decodeJSON[T any](t *testing.T, rec *httptest.ResponseRecorder) T {
+	t.Helper()
+	var v T
+	if err := json.NewDecoder(rec.Body).Decode(&v); err != nil {
+		t.Fatalf("decoding response: %v", err)
+	}
+	return v
+}
+
+// Category handler tests
+
+func TestCreateCategory_Success(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/api/v1/categories", jsonBody(map[string]string{"name": "Test"}))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusCreated)
+	}
+
+	cat := decodeJSON[model.Category](t, rec)
+	if cat.Name != "Test" {
+		t.Errorf("Name = %q, want %q", cat.Name, "Test")
+	}
+	if cat.ID == uuid.Nil {
+		t.Error("ID should not be nil")
+	}
+}
+
+func TestCreateCategory_EmptyName(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/api/v1/categories", jsonBody(map[string]string{"name": ""}))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestCreateCategory_InvalidJSON(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/api/v1/categories", bytes.NewBufferString("{bad"))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestCreateCategory_UnknownField(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	body := `{"name":"Test","bogus":"field"}`
+	req := httptest.NewRequest("POST", "/api/v1/categories", bytes.NewBufferString(body))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d (unknown fields should be rejected)", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestGetCategory_NotFound(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/api/v1/categories/"+uuid.New().String(), nil)
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
+func TestGetCategory_InvalidUUID(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/api/v1/categories/not-a-uuid", nil)
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestListCategories_Empty(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/api/v1/categories", nil)
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+
+	cats := decodeJSON[[]model.Category](t, rec)
+	if len(cats) != 0 {
+		t.Errorf("expected empty list, got %d", len(cats))
+	}
+}
+
+func TestUpdateCategory_NotFound(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("PUT", "/api/v1/categories/"+uuid.New().String(), jsonBody(map[string]string{"name": "X"}))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
+func TestDeleteCategory_Success(t *testing.T) {
+	h, ms := newTestHandler()
+	mux := newMux(h)
+
+	cat := model.Category{ID: uuid.New(), Name: "X"}
+	ms.categories[cat.ID] = cat
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("DELETE", "/api/v1/categories/"+cat.ID.String(), nil)
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNoContent)
+	}
+}
+
+func TestDeleteCategory_NotFound(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("DELETE", "/api/v1/categories/"+uuid.New().String(), nil)
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
+// Contract handler tests
+
+func TestCreateContract_Success(t *testing.T) {
+	h, ms := newTestHandler()
+	mux := newMux(h)
+
+	cat := model.Category{ID: uuid.New(), Name: "Cat"}
+	ms.categories[cat.ID] = cat
+
+	body := map[string]any{
+		"name":                    "Phone",
+		"startDate":              "2025-01-01",
+		"minimumDurationMonths":   12,
+		"extensionDurationMonths": 12,
+		"noticePeriodMonths":      3,
+	}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/api/v1/categories/"+cat.ID.String()+"/contracts", jsonBody(body))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusCreated)
+	}
+
+	con := decodeJSON[model.Contract](t, rec)
+	if con.Name != "Phone" {
+		t.Errorf("Name = %q, want %q", con.Name, "Phone")
+	}
+	if con.CategoryID != cat.ID {
+		t.Errorf("CategoryID = %s, want %s", con.CategoryID, cat.ID)
+	}
+}
+
+func TestCreateContract_MissingName(t *testing.T) {
+	h, ms := newTestHandler()
+	mux := newMux(h)
+
+	cat := model.Category{ID: uuid.New(), Name: "Cat"}
+	ms.categories[cat.ID] = cat
+
+	body := map[string]any{"startDate": "2025-01-01"}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/api/v1/categories/"+cat.ID.String()+"/contracts", jsonBody(body))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestCreateContract_MissingStartDate(t *testing.T) {
+	h, ms := newTestHandler()
+	mux := newMux(h)
+
+	cat := model.Category{ID: uuid.New(), Name: "Cat"}
+	ms.categories[cat.ID] = cat
+
+	body := map[string]any{"name": "X"}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/api/v1/categories/"+cat.ID.String()+"/contracts", jsonBody(body))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestCreateContract_CategoryNotFound(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	body := map[string]any{"name": "X", "startDate": "2025-01-01"}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/api/v1/categories/"+uuid.New().String()+"/contracts", jsonBody(body))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
+func TestGetContract_NotFound(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/api/v1/contracts/"+uuid.New().String(), nil)
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
+func TestGetContract_InvalidUUID(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/api/v1/contracts/not-valid", nil)
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestDeleteContract_Success(t *testing.T) {
+	h, ms := newTestHandler()
+	mux := newMux(h)
+
+	con := model.Contract{ID: uuid.New(), Name: "X"}
+	ms.contracts[con.ID] = con
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("DELETE", "/api/v1/contracts/"+con.ID.String(), nil)
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNoContent)
+	}
+}
+
+func TestDeleteContract_NotFound(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("DELETE", "/api/v1/contracts/"+uuid.New().String(), nil)
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
+func TestUpdateContract_NotFound(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	body := map[string]any{"name": "X", "startDate": "2025-01-01"}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("PUT", "/api/v1/contracts/"+uuid.New().String(), jsonBody(body))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
+// Content-Type check
+
+func TestResponses_HaveJSONContentType(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/api/v1/categories", nil)
+	mux.ServeHTTP(rec, req)
+
+	ct := rec.Header().Get("Content-Type")
+	if ct != "application/json" {
+		t.Errorf("Content-Type = %q, want %q", ct, "application/json")
+	}
+}

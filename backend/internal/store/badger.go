@@ -13,7 +13,10 @@ import (
 	"github.com/tobi/contracts/backend/internal/model"
 )
 
-var ErrNotFound = errors.New("not found")
+var (
+	ErrNotFound = errors.New("not found")
+	ErrConflict = errors.New("conflict")
+)
 
 type BadgerStore struct {
 	db     *badger.DB
@@ -72,6 +75,67 @@ func (s *BadgerStore) Healthy() error {
 	return s.db.View(func(txn *badger.Txn) error {
 		return nil
 	})
+}
+
+// User keys
+
+func usrKey(id uuid.UUID) []byte {
+	return []byte(fmt.Sprintf("usr/%s", id))
+}
+
+func usrEmailKey(email string) []byte {
+	return []byte(fmt.Sprintf("usr_email/%s", email))
+}
+
+// Users
+
+func (s *BadgerStore) CreateUser(_ context.Context, u model.User) error {
+	data, err := json.Marshal(u)
+	if err != nil {
+		return err
+	}
+	return s.db.Update(func(txn *badger.Txn) error {
+		// Check email uniqueness
+		if _, err := txn.Get(usrEmailKey(u.Email)); err == nil {
+			return ErrConflict
+		}
+		if err := txn.Set(usrKey(u.ID), data); err != nil {
+			return err
+		}
+		return txn.Set(usrEmailKey(u.Email), []byte(u.ID.String()))
+	})
+}
+
+func (s *BadgerStore) GetUserByEmail(_ context.Context, email string) (model.User, error) {
+	var user model.User
+	err := s.db.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(usrEmailKey(email))
+		if err != nil {
+			return err
+		}
+		var idStr string
+		if err := item.Value(func(val []byte) error {
+			idStr = string(val)
+			return nil
+		}); err != nil {
+			return err
+		}
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			return err
+		}
+		uItem, err := txn.Get(usrKey(id))
+		if err != nil {
+			return err
+		}
+		return uItem.Value(func(val []byte) error {
+			return json.Unmarshal(val, &user)
+		})
+	})
+	if errors.Is(err, badger.ErrKeyNotFound) {
+		return user, ErrNotFound
+	}
+	return user, err
 }
 
 // Key helpers

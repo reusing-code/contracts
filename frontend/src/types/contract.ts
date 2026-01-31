@@ -19,6 +19,8 @@ export const contractSchema = z.object({
   comments: z.string().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
+  cancellationDate: z.string().date().optional(),
+  expired: z.boolean().optional(),
 })
 
 export type Contract = z.infer<typeof contractSchema>

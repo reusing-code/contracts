@@ -64,6 +64,19 @@
     "banking": "Banking / Portfolios",
     "telecommunications": "Telecommunications"
   },
+  "auth": {
+    "login": "Sign In",
+    "register": "Sign Up",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "loginTitle": "Sign in to your account",
+    "registerTitle": "Create an account",
+    "switchToRegister": "Don't have an account? Sign up",
+    "switchToLogin": "Already have an account? Sign in",
+    "logout": "Logout"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",

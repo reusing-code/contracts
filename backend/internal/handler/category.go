@@ -5,11 +5,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tobi/contracts/backend/internal/middleware"
 	"github.com/tobi/contracts/backend/internal/model"
 )
 
 func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
-	categories, err := h.store.ListCategories(r.Context(), defaultUserID)
+	categories, err := h.store.ListCategories(r.Context(), middleware.GetUserID(r.Context()))
 	if err != nil {
 		h.handleStoreError(w, err)
 		return
@@ -24,7 +25,7 @@ func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cat, err := h.store.GetCategory(r.Context(), defaultUserID, id)
+	cat, err := h.store.GetCategory(r.Context(), middleware.GetUserID(r.Context()), id)
 	if err != nil {
 		h.handleStoreError(w, err)
 		return
@@ -51,7 +52,7 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt: now,
 	}
 
-	if err := h.store.CreateCategory(r.Context(), defaultUserID, cat); err != nil {
+	if err := h.store.CreateCategory(r.Context(), middleware.GetUserID(r.Context()), cat); err != nil {
 		h.handleStoreError(w, err)
 		return
 	}
@@ -65,7 +66,7 @@ func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existing, err := h.store.GetCategory(r.Context(), defaultUserID, id)
+	existing, err := h.store.GetCategory(r.Context(), middleware.GetUserID(r.Context()), id)
 	if err != nil {
 		h.handleStoreError(w, err)
 		return
@@ -84,7 +85,7 @@ func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 	existing.Name = input.Name
 	existing.UpdatedAt = time.Now().UTC()
 
-	if err := h.store.UpdateCategory(r.Context(), defaultUserID, existing); err != nil {
+	if err := h.store.UpdateCategory(r.Context(), middleware.GetUserID(r.Context()), existing); err != nil {
 		h.handleStoreError(w, err)
 		return
 	}
@@ -98,7 +99,7 @@ func (h *Handler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.store.DeleteCategory(r.Context(), defaultUserID, id); err != nil {
+	if err := h.store.DeleteCategory(r.Context(), middleware.GetUserID(r.Context()), id); err != nil {
 		h.handleStoreError(w, err)
 		return
 	}

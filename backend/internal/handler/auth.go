@@ -1,0 +1,114 @@
+package handler
+
+import (
+	"net/http"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
+	"github.com/tobi/contracts/backend/internal/model"
+	"github.com/tobi/contracts/backend/internal/store"
+	"golang.org/x/crypto/bcrypt"
+)
+
+type authRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type authResponse struct {
+	Token string     `json:"token"`
+	User  model.User `json:"user"`
+}
+
+func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
+	var req authRequest
+	if err := h.readJSON(r, &req); err != nil {
+		h.errorResponse(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.Email == "" || req.Password == "" {
+		h.errorResponse(w, http.StatusBadRequest, "email and password are required")
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		h.logger.Error("hashing password", "error", err)
+		h.errorResponse(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+
+	user := model.User{
+		ID:           uuid.New(),
+		Email:        req.Email,
+		PasswordHash: string(hash),
+		CreatedAt:    time.Now().UTC(),
+	}
+
+	if err := h.store.CreateUser(r.Context(), user); err != nil {
+		if err == store.ErrConflict {
+			h.errorResponse(w, http.StatusConflict, "email already registered")
+			return
+		}
+		h.logger.Error("creating user", "error", err)
+		h.errorResponse(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+
+	token, err := h.issueToken(user.ID.String())
+	if err != nil {
+		h.logger.Error("issuing token", "error", err)
+		h.errorResponse(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+
+	h.writeJSON(w, http.StatusCreated, authResponse{Token: token, User: user})
+}
+
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+	var req authRequest
+	if err := h.readJSON(r, &req); err != nil {
+		h.errorResponse(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.Email == "" || req.Password == "" {
+		h.errorResponse(w, http.StatusBadRequest, "email and password are required")
+		return
+	}
+
+	user, err := h.store.GetUserByEmail(r.Context(), req.Email)
+	if err != nil {
+		if err == store.ErrNotFound {
+			h.errorResponse(w, http.StatusUnauthorized, "invalid credentials")
+			return
+		}
+		h.logger.Error("looking up user", "error", err)
+		h.errorResponse(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+		h.errorResponse(w, http.StatusUnauthorized, "invalid credentials")
+		return
+	}
+
+	token, err := h.issueToken(user.ID.String())
+	if err != nil {
+		h.logger.Error("issuing token", "error", err)
+		h.errorResponse(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, authResponse{Token: token, User: user})
+}
+
+func (h *Handler) issueToken(userID string) (string, error) {
+	claims := jwt.RegisteredClaims{
+		Subject:   userID,
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(h.jwtSecret)
+}

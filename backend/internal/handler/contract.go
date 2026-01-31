@@ -5,16 +5,17 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tobi/contracts/backend/internal/middleware"
 	"github.com/tobi/contracts/backend/internal/model"
 )
 
 func (h *Handler) ListContracts(w http.ResponseWriter, r *http.Request) {
-	contracts, err := h.store.ListContracts(r.Context(), defaultUserID)
+	contracts, err := h.store.ListContracts(r.Context(), middleware.GetUserID(r.Context()))
 	if err != nil {
 		h.handleStoreError(w, err)
 		return
 	}
-	h.writeJSON(w, http.StatusOK, contracts)
+	h.writeJSON(w, http.StatusOK, newContractViews(contracts))
 }
 
 func (h *Handler) ListContractsByCategory(w http.ResponseWriter, r *http.Request) {
@@ -24,12 +25,12 @@ func (h *Handler) ListContractsByCategory(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	contracts, err := h.store.ListContractsByCategory(r.Context(), defaultUserID, catID)
+	contracts, err := h.store.ListContractsByCategory(r.Context(), middleware.GetUserID(r.Context()), catID)
 	if err != nil {
 		h.handleStoreError(w, err)
 		return
 	}
-	h.writeJSON(w, http.StatusOK, contracts)
+	h.writeJSON(w, http.StatusOK, newContractViews(contracts))
 }
 
 func (h *Handler) CreateContractInCategory(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +41,7 @@ func (h *Handler) CreateContractInCategory(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Verify category exists
-	if _, err := h.store.GetCategory(r.Context(), defaultUserID, catID); err != nil {
+	if _, err := h.store.GetCategory(r.Context(), middleware.GetUserID(r.Context()), catID); err != nil {
 		h.handleStoreError(w, err)
 		return
 	}
@@ -77,11 +78,11 @@ func (h *Handler) CreateContractInCategory(w http.ResponseWriter, r *http.Reques
 		UpdatedAt:               now,
 	}
 
-	if err := h.store.CreateContract(r.Context(), defaultUserID, con); err != nil {
+	if err := h.store.CreateContract(r.Context(), middleware.GetUserID(r.Context()), con); err != nil {
 		h.handleStoreError(w, err)
 		return
 	}
-	h.writeJSON(w, http.StatusCreated, con)
+	h.writeJSON(w, http.StatusCreated, newContractView(con))
 }
 
 func (h *Handler) GetContract(w http.ResponseWriter, r *http.Request) {
@@ -91,12 +92,12 @@ func (h *Handler) GetContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	con, err := h.store.GetContract(r.Context(), defaultUserID, id)
+	con, err := h.store.GetContract(r.Context(), middleware.GetUserID(r.Context()), id)
 	if err != nil {
 		h.handleStoreError(w, err)
 		return
 	}
-	h.writeJSON(w, http.StatusOK, con)
+	h.writeJSON(w, http.StatusOK, newContractView(con))
 }
 
 func (h *Handler) UpdateContract(w http.ResponseWriter, r *http.Request) {
@@ -106,7 +107,7 @@ func (h *Handler) UpdateContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existing, err := h.store.GetContract(r.Context(), defaultUserID, id)
+	existing, err := h.store.GetContract(r.Context(), middleware.GetUserID(r.Context()), id)
 	if err != nil {
 		h.handleStoreError(w, err)
 		return
@@ -138,11 +139,11 @@ func (h *Handler) UpdateContract(w http.ResponseWriter, r *http.Request) {
 	existing.Comments = input.Comments
 	existing.UpdatedAt = time.Now().UTC()
 
-	if err := h.store.UpdateContract(r.Context(), defaultUserID, existing); err != nil {
+	if err := h.store.UpdateContract(r.Context(), middleware.GetUserID(r.Context()), existing); err != nil {
 		h.handleStoreError(w, err)
 		return
 	}
-	h.writeJSON(w, http.StatusOK, existing)
+	h.writeJSON(w, http.StatusOK, newContractView(existing))
 }
 
 func (h *Handler) DeleteContract(w http.ResponseWriter, r *http.Request) {
@@ -152,7 +153,7 @@ func (h *Handler) DeleteContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.store.DeleteContract(r.Context(), defaultUserID, id); err != nil {
+	if err := h.store.DeleteContract(r.Context(), middleware.GetUserID(r.Context()), id); err != nil {
 		h.handleStoreError(w, err)
 		return
 	}

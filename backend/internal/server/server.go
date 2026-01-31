@@ -30,30 +30,38 @@ func New(cfg config.Config, logger *slog.Logger, s store.Store) *Server {
 }
 
 func (s *Server) Run() error {
-	h := handler.New(s.store, s.logger)
+	jwtSecret := []byte(s.cfg.JWTSecret)
+	h := handler.New(s.store, s.logger, jwtSecret)
+
+	// Protected API routes (require auth)
+	apiMux := http.NewServeMux()
+	apiMux.HandleFunc("GET /api/v1/categories", h.ListCategories)
+	apiMux.HandleFunc("POST /api/v1/categories", h.CreateCategory)
+	apiMux.HandleFunc("GET /api/v1/categories/{id}", h.GetCategory)
+	apiMux.HandleFunc("PUT /api/v1/categories/{id}", h.UpdateCategory)
+	apiMux.HandleFunc("DELETE /api/v1/categories/{id}", h.DeleteCategory)
+	apiMux.HandleFunc("GET /api/v1/categories/{id}/contracts", h.ListContractsByCategory)
+	apiMux.HandleFunc("POST /api/v1/categories/{id}/contracts", h.CreateContractInCategory)
+	apiMux.HandleFunc("GET /api/v1/contracts/upcoming-renewals", h.UpcomingRenewals)
+	apiMux.HandleFunc("GET /api/v1/contracts", h.ListContracts)
+	apiMux.HandleFunc("GET /api/v1/contracts/{id}", h.GetContract)
+	apiMux.HandleFunc("PUT /api/v1/contracts/{id}", h.UpdateContract)
+	apiMux.HandleFunc("DELETE /api/v1/contracts/{id}", h.DeleteContract)
+	apiMux.HandleFunc("GET /api/v1/summary", h.Summary)
+
+	protectedAPI := middleware.Auth(jwtSecret)(apiMux)
+
 	mux := http.NewServeMux()
 
-	// Health + metrics
+	// Public routes
 	mux.HandleFunc("GET /healthz", h.Healthz)
 	mux.HandleFunc("GET /readyz", h.Readyz)
 	mux.Handle("GET /metrics", promhttp.Handler())
+	mux.HandleFunc("POST /api/v1/auth/register", h.Register)
+	mux.HandleFunc("POST /api/v1/auth/login", h.Login)
 
-	// Category routes
-	mux.HandleFunc("GET /api/v1/categories", h.ListCategories)
-	mux.HandleFunc("POST /api/v1/categories", h.CreateCategory)
-	mux.HandleFunc("GET /api/v1/categories/{id}", h.GetCategory)
-	mux.HandleFunc("PUT /api/v1/categories/{id}", h.UpdateCategory)
-	mux.HandleFunc("DELETE /api/v1/categories/{id}", h.DeleteCategory)
-
-	// Contract routes nested under categories
-	mux.HandleFunc("GET /api/v1/categories/{id}/contracts", h.ListContractsByCategory)
-	mux.HandleFunc("POST /api/v1/categories/{id}/contracts", h.CreateContractInCategory)
-
-	// Contract routes
-	mux.HandleFunc("GET /api/v1/contracts", h.ListContracts)
-	mux.HandleFunc("GET /api/v1/contracts/{id}", h.GetContract)
-	mux.HandleFunc("PUT /api/v1/contracts/{id}", h.UpdateContract)
-	mux.HandleFunc("DELETE /api/v1/contracts/{id}", h.DeleteContract)
+	// Mount protected API routes
+	mux.Handle("/api/v1/", protectedAPI)
 
 	// SPA static files
 	if s.cfg.StaticDir != "" {

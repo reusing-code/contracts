@@ -15,6 +15,7 @@ type Config struct {
 	CORSOrigin  string `env:"CORS_ORIGIN"`
 	StaticDir   string `env:"STATIC_DIR"`
 	Environment string `env:"ENVIRONMENT" envDefault:"development"`
+	JWTSecret   string `env:"JWT_SECRET,required"`
 }
 
 func Load() (Config, error) {
