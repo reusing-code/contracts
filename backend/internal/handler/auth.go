@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -56,6 +57,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.seedDefaultCategories(r.Context(), user.ID.String())
+
 	token, err := h.issueToken(user.ID.String())
 	if err != nil {
 		h.logger.Error("issuing token", "error", err)
@@ -101,6 +104,31 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.writeJSON(w, http.StatusOK, authResponse{Token: token, User: user})
+}
+
+var defaultCategories = []struct {
+	Name    string
+	NameKey string
+}{
+	{"Insurance", "categoryNames.insurance"},
+	{"Banking / Portfolios", "categoryNames.banking"},
+	{"Telecommunications", "categoryNames.telecommunications"},
+}
+
+func (h *Handler) seedDefaultCategories(ctx context.Context, userID string) {
+	now := time.Now().UTC()
+	for _, dc := range defaultCategories {
+		cat := model.Category{
+			ID:        uuid.New(),
+			Name:      dc.Name,
+			NameKey:   dc.NameKey,
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+		if err := h.store.CreateCategory(ctx, userID, cat); err != nil {
+			h.logger.Error("seeding default category", "name", dc.Name, "error", err)
+		}
+	}
 }
 
 func (h *Handler) issueToken(userID string) (string, error) {

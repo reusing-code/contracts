@@ -192,6 +192,22 @@ func newAuthMux(h *Handler) http.Handler {
 	return mux
 }
 
+func TestRegister_SeedsDefaultCategories(t *testing.T) {
+	h, ms := newTestHandler()
+	mux := newAuthMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/api/v1/auth/register", jsonBody(map[string]string{"email": "seed@test.com", "password": "pass"}))
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("register: status = %d, want %d", rec.Code, http.StatusCreated)
+	}
+
+	if len(ms.categories) != 3 {
+		t.Fatalf("expected 3 default categories, got %d", len(ms.categories))
+	}
+}
+
 func TestRegisterThenLogin(t *testing.T) {
 	h, _ := newTestHandler()
 	mux := newAuthMux(h)
