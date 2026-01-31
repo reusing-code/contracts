@@ -183,6 +183,94 @@ func decodeJSON[T any](t *testing.T, rec *httptest.ResponseRecorder) T {
 	return v
 }
 
+// Auth handler tests
+
+func newAuthMux(h *Handler) http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /api/v1/auth/register", h.Register)
+	mux.HandleFunc("POST /api/v1/auth/login", h.Login)
+	return mux
+}
+
+func TestRegisterThenLogin(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newAuthMux(h)
+
+	creds := map[string]string{"email": "test@example.com", "password": "secret123"}
+
+	// Register
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/api/v1/auth/register", jsonBody(creds))
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("register: status = %d, want %d; body: %s", rec.Code, http.StatusCreated, rec.Body.String())
+	}
+	regResp := decodeJSON[authResponse](t, rec)
+	if regResp.Token == "" {
+		t.Fatal("register: expected token")
+	}
+	if regResp.User.Email != "test@example.com" {
+		t.Fatalf("register: email = %q, want %q", regResp.User.Email, "test@example.com")
+	}
+
+	// Login with same credentials
+	rec = httptest.NewRecorder()
+	req = httptest.NewRequest("POST", "/api/v1/auth/login", jsonBody(creds))
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("login: status = %d, want %d; body: %s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+	loginResp := decodeJSON[authResponse](t, rec)
+	if loginResp.Token == "" {
+		t.Fatal("login: expected token")
+	}
+	if loginResp.User.Email != "test@example.com" {
+		t.Fatalf("login: email = %q, want %q", loginResp.User.Email, "test@example.com")
+	}
+}
+
+func TestLogin_WrongPassword(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newAuthMux(h)
+
+	// Register
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/api/v1/auth/register", jsonBody(map[string]string{"email": "a@b.com", "password": "correct"}))
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("register: status = %d, want %d", rec.Code, http.StatusCreated)
+	}
+
+	// Login with wrong password
+	rec = httptest.NewRecorder()
+	req = httptest.NewRequest("POST", "/api/v1/auth/login", jsonBody(map[string]string{"email": "a@b.com", "password": "wrong"}))
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("login wrong pw: status = %d, want %d", rec.Code, http.StatusUnauthorized)
+	}
+}
+
+func TestRegister_DuplicateEmail(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newAuthMux(h)
+
+	creds := map[string]string{"email": "dup@test.com", "password": "pass"}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/api/v1/auth/register", jsonBody(creds))
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("first register: status = %d, want %d", rec.Code, http.StatusCreated)
+	}
+
+	rec = httptest.NewRecorder()
+	req = httptest.NewRequest("POST", "/api/v1/auth/register", jsonBody(creds))
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("duplicate register: status = %d, want %d", rec.Code, http.StatusConflict)
+	}
+}
+
 // Category handler tests
 
 func TestCreateCategory_Success(t *testing.T) {

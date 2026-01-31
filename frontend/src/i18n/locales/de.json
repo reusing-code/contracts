@@ -73,6 +73,9 @@
     "passwordPlaceholder": "Passwort eingeben",
     "loginTitle": "In dein Konto einloggen",
     "registerTitle": "Konto erstellen",
+    "confirmPassword": "Passwort bestätigen",
+    "confirmPasswordPlaceholder": "Passwort wiederholen",
+    "passwordMismatch": "Passwörter stimmen nicht überein",
     "switchToRegister": "Kein Konto? Registrieren",
     "switchToLogin": "Bereits ein Konto? Anmelden",
     "logout": "Abmelden"

@@ -73,6 +73,9 @@
     "passwordPlaceholder": "Enter your password",
     "loginTitle": "Sign in to your account",
     "registerTitle": "Create an account",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Repeat your password",
+    "passwordMismatch": "Passwords do not match",
     "switchToRegister": "Don't have an account? Sign up",
     "switchToLogin": "Already have an account? Sign in",
     "logout": "Logout"

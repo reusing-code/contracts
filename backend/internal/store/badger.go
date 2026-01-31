@@ -87,15 +87,40 @@ func usrEmailKey(email string) []byte {
 	return []byte(fmt.Sprintf("usr_email/%s", email))
 }
 
+// storableUser includes PasswordHash for persistence (model.User has json:"-" on it).
+type storableUser struct {
+	ID           uuid.UUID `json:"id"`
+	Email        string    `json:"email"`
+	PasswordHash string    `json:"passwordHash"`
+	CreatedAt    time.Time `json:"createdAt"`
+}
+
+func toStorableUser(u model.User) storableUser {
+	return storableUser{
+		ID:           u.ID,
+		Email:        u.Email,
+		PasswordHash: u.PasswordHash,
+		CreatedAt:    u.CreatedAt,
+	}
+}
+
+func (su storableUser) toModel() model.User {
+	return model.User{
+		ID:           su.ID,
+		Email:        su.Email,
+		PasswordHash: su.PasswordHash,
+		CreatedAt:    su.CreatedAt,
+	}
+}
+
 // Users
 
 func (s *BadgerStore) CreateUser(_ context.Context, u model.User) error {
-	data, err := json.Marshal(u)
+	data, err := json.Marshal(toStorableUser(u))
 	if err != nil {
 		return err
 	}
 	return s.db.Update(func(txn *badger.Txn) error {
-		// Check email uniqueness
 		if _, err := txn.Get(usrEmailKey(u.Email)); err == nil {
 			return ErrConflict
 		}
@@ -129,7 +154,12 @@ func (s *BadgerStore) GetUserByEmail(_ context.Context, email string) (model.Use
 			return err
 		}
 		return uItem.Value(func(val []byte) error {
-			return json.Unmarshal(val, &user)
+			var su storableUser
+			if err := json.Unmarshal(val, &su); err != nil {
+				return err
+			}
+			user = su.toModel()
+			return nil
 		})
 	})
 	if errors.Is(err, badger.ErrKeyNotFound) {
