@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   getContractsByCategory,
+  getUpcomingRenewals,
   createContract,
   updateContract,
   deleteContract,
@@ -13,6 +14,13 @@ export function useCategoryContracts(categoryId: string) {
   return useQuery({
     queryKey: contractsKey(categoryId),
     queryFn: () => getContractsByCategory(categoryId),
+  })
+}
+
+export function useUpcomingRenewals(days: number = 365) {
+  return useQuery({
+    queryKey: ["contracts", "upcoming-renewals", days],
+    queryFn: () => getUpcomingRenewals(days),
   })
 }
 

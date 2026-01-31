@@ -24,10 +24,13 @@ const tableColumns = contractFields
   .filter((f) => f.showInTable)
   .sort((a, b) => a.tableOrder - b.tableOrder)
 
+import { cn } from "@/lib/utils"
+
 interface ContractsTableProps {
   contracts: Contract[]
   onEdit: (contract: Contract) => void
   onDelete: (contract: Contract) => void
+  getRowClassName?: (contract: Contract) => string | undefined
 }
 
 function formatCellValue(contract: Contract, key: string, currency: string): string {
@@ -38,7 +41,7 @@ function formatCellValue(contract: Contract, key: string, currency: string): str
   return String(value)
 }
 
-export function ContractsTable({ contracts, onEdit, onDelete }: ContractsTableProps) {
+export function ContractsTable({ contracts, onEdit, onDelete, getRowClassName }: ContractsTableProps) {
   const { t } = useTranslation()
   const currency = t("common.currency")
 
@@ -64,8 +67,12 @@ export function ContractsTable({ contracts, onEdit, onDelete }: ContractsTablePr
             </TableRow>
           ) : (
             contracts.map((contract) => {
+              const rowClass = getRowClassName?.(contract)
               return (
-                <TableRow key={contract.id} className={contract.expired ? "opacity-50" : undefined}>
+                <TableRow 
+                  key={contract.id} 
+                  className={cn(contract.expired ? "opacity-50" : undefined, rowClass)}
+                >
                   {tableColumns.map((col) => (
                     <TableCell key={col.key}>{formatCellValue(contract, col.key, currency)}</TableCell>
                   ))}

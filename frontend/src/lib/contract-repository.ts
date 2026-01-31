@@ -26,6 +26,10 @@ export async function deleteContract(id: string): Promise<void> {
   return del(`/contracts/${id}`)
 }
 
+export async function getUpcomingRenewals(days: number = 365): Promise<Contract[]> {
+  return get<Contract[]>(`/contracts/upcoming-renewals?days=${days}`)
+}
+
 export async function getSummary(): Promise<Summary> {
   return get<Summary>("/summary")
 }

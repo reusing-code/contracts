@@ -23,6 +23,16 @@ export function Sidebar() {
           {t("nav.dashboard")}
         </Link>
 
+        <Link
+          to="/upcoming-renewals"
+          className={cn(
+            "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent",
+            matchRoute({ to: "/upcoming-renewals" }) && "bg-accent",
+          )}
+        >
+          {t("nav.upcomingRenewals")}
+        </Link>
+
         <h2 className="mt-4 mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {t("nav.categories")}
         </h2>

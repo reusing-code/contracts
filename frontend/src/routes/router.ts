@@ -3,8 +3,9 @@ import { rootRoute } from "./__root"
 import { indexRoute } from "."
 import { categoryRoute } from "./categories.$categoryId"
 import { loginRoute } from "./login"
+import { upcomingRenewalsRoute } from "./upcoming-renewals"
 
-const routeTree = rootRoute.addChildren([indexRoute, categoryRoute, loginRoute])
+const routeTree = rootRoute.addChildren([indexRoute, categoryRoute, loginRoute, upcomingRenewalsRoute])
 
 export const router = createRouter({ routeTree })
 
