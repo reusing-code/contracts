@@ -142,7 +142,7 @@ const testUserID = "00000000-0000-0000-0000-000000000001"
 
 func newTestHandler() (*Handler, *mockStore) {
 	ms := newMockStore()
-	h := New(ms, slog.Default(), testJWTSecret)
+	h := New(ms, slog.Default(), testJWTSecret, nil)
 	return h, ms
 }
 

@@ -14,6 +14,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tobi/contracts/backend/internal/config"
+	"github.com/tobi/contracts/backend/internal/email"
 	"github.com/tobi/contracts/backend/internal/handler"
 	"github.com/tobi/contracts/backend/internal/middleware"
 	"github.com/tobi/contracts/backend/internal/store"
@@ -31,7 +32,8 @@ func New(cfg config.Config, logger *slog.Logger, s store.Store) *Server {
 
 func (s *Server) Run() error {
 	jwtSecret := []byte(s.cfg.JWTSecret)
-	h := handler.New(s.store, s.logger, jwtSecret)
+	emailClient := email.NewClient(s.cfg)
+	h := handler.New(s.store, s.logger, jwtSecret, emailClient)
 
 	// Protected API routes (require auth)
 	apiMux := http.NewServeMux()

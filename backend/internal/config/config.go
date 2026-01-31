@@ -16,6 +16,14 @@ type Config struct {
 	StaticDir   string `env:"STATIC_DIR"`
 	Environment string `env:"ENVIRONMENT" envDefault:"development"`
 	JWTSecret   string `env:"JWT_SECRET,required"`
+
+	// SMTP Configuration
+	SMTPHost     string `env:"SMTP_HOST"`
+	SMTPPort     int    `env:"SMTP_PORT"     envDefault:"587"`
+	SMTPProtocol string `env:"SMTP_PROTOCOL" envDefault:"starttls"` // "tls", "starttls", "none"
+	SMTPUser     string `env:"SMTP_USER"`
+	SMTPPassword string `env:"SMTP_PASSWORD"`
+	SMTPFrom     string `env:"SMTP_FROM"`
 }
 
 func Load() (Config, error) {

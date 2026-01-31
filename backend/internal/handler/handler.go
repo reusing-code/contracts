@@ -7,17 +7,24 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/tobi/contracts/backend/internal/email"
 	"github.com/tobi/contracts/backend/internal/store"
 )
 
 type Handler struct {
-	store     store.Store
-	logger    *slog.Logger
-	jwtSecret []byte
+	store       store.Store
+	logger      *slog.Logger
+	jwtSecret   []byte
+	emailClient *email.Client
 }
 
-func New(s store.Store, logger *slog.Logger, jwtSecret []byte) *Handler {
-	return &Handler{store: s, logger: logger, jwtSecret: jwtSecret}
+func New(s store.Store, logger *slog.Logger, jwtSecret []byte, emailClient *email.Client) *Handler {
+	return &Handler{
+		store:       s,
+		logger:      logger,
+		jwtSecret:   jwtSecret,
+		emailClient: emailClient,
+	}
 }
 
 func (h *Handler) writeJSON(w http.ResponseWriter, status int, v any) {

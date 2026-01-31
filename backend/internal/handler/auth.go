@@ -59,6 +59,10 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	h.seedDefaultCategories(r.Context(), user.ID.String())
 
+	if h.emailClient != nil {
+		go h.sendWelcomeEmail(user.Email)
+	}
+
 	token, err := h.issueToken(user.ID.String())
 	if err != nil {
 		h.logger.Error("issuing token", "error", err)
@@ -139,4 +143,13 @@ func (h *Handler) issueToken(userID string) (string, error) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(h.jwtSecret)
+}
+
+func (h *Handler) sendWelcomeEmail(to string) {
+	subject := "Welcome to Contracts!"
+	body := "Hello,\n\nWelcome to Contracts! You have successfully registered your account.\n\nBest regards,\nYour Contracts Team"
+
+	if err := h.emailClient.Send([]string{to}, subject, body); err != nil {
+		h.logger.Error("sending welcome email", "to", to, "error", err)
+	}
 }

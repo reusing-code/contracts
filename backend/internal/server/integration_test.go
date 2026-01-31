@@ -28,7 +28,7 @@ func setupServer(t *testing.T) *httptest.Server {
 	}
 	t.Cleanup(func() { s.Close() })
 
-	h := handler.New(s, logger, testJWTSecret)
+	h := handler.New(s, logger, testJWTSecret, nil)
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/v1/categories", h.ListCategories)
