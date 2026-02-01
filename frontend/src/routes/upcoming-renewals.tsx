@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { rootRoute } from "./__root"
 import { useUpcomingRenewals } from "@/hooks/use-contracts"
+import { useSettings } from "@/hooks/use-settings"
 import { updateContract, deleteContract } from "@/lib/contract-repository"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { differenceInDays } from "date-fns"
@@ -20,7 +21,8 @@ export const upcomingRenewalsRoute = createRoute({
 
 function UpcomingRenewalsPage() {
   const { t } = useTranslation()
-  const { data: contracts = [] } = useUpcomingRenewals()
+  const { data: settings } = useSettings()
+  const { data: contracts = [] } = useUpcomingRenewals(settings?.renewalDays)
   const qc = useQueryClient()
 
   const [editingContract, setEditingContract] = useState<Contract | null>(null)

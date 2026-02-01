@@ -50,6 +50,9 @@ func (s *Server) Run() error {
 	apiMux.HandleFunc("PUT /api/v1/contracts/{id}", h.UpdateContract)
 	apiMux.HandleFunc("DELETE /api/v1/contracts/{id}", h.DeleteContract)
 	apiMux.HandleFunc("GET /api/v1/summary", h.Summary)
+	apiMux.HandleFunc("GET /api/v1/settings", h.GetSettings)
+	apiMux.HandleFunc("PUT /api/v1/settings", h.UpdateSettings)
+	apiMux.HandleFunc("PUT /api/v1/settings/password", h.ChangePassword)
 
 	protectedAPI := middleware.Auth(jwtSecret)(apiMux)
 

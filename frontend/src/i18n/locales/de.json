@@ -5,6 +5,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "upcomingRenewals": "Anstehende Verlängerungen",
+    "settings": "Einstellungen",
     "categories": "Kategorien",
     "language": "Sprache",
     "en": "English",
@@ -80,6 +81,19 @@
     "switchToRegister": "Kein Konto? Registrieren",
     "switchToLogin": "Bereits ein Konto? Anmelden",
     "logout": "Abmelden"
+  },
+  "settings": {
+    "preferences": "Einstellungen",
+    "preferencesDescription": "Standardwerte für die Anwendung konfigurieren.",
+    "renewalDays": "Verlängerungszeitraum (Tage)",
+    "saved": "Einstellungen gespeichert.",
+    "saveFailed": "Einstellungen konnten nicht gespeichert werden.",
+    "changePassword": "Passwort ändern",
+    "changePasswordDescription": "Aktualisiere dein Kontopasswort.",
+    "currentPassword": "Aktuelles Passwort",
+    "newPassword": "Neues Passwort",
+    "passwordChanged": "Passwort erfolgreich geändert.",
+    "passwordChangeFailed": "Passwort konnte nicht geändert werden."
   },
   "common": {
     "save": "Speichern",

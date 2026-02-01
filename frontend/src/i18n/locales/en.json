@@ -5,6 +5,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "upcomingRenewals": "Upcoming Renewals",
+    "settings": "Settings",
     "categories": "Categories",
     "language": "Language",
     "en": "English",
@@ -80,6 +81,19 @@
     "switchToRegister": "Don't have an account? Sign up",
     "switchToLogin": "Already have an account? Sign in",
     "logout": "Logout"
+  },
+  "settings": {
+    "preferences": "Preferences",
+    "preferencesDescription": "Configure default values for the application.",
+    "renewalDays": "Renewal timeframe (days)",
+    "saved": "Settings saved.",
+    "saveFailed": "Failed to save settings.",
+    "changePassword": "Change Password",
+    "changePasswordDescription": "Update your account password.",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "passwordChanged": "Password changed successfully.",
+    "passwordChangeFailed": "Failed to change password."
   },
   "common": {
     "save": "Save",

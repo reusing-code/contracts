@@ -33,6 +33,16 @@ export function Sidebar() {
           {t("nav.upcomingRenewals")}
         </Link>
 
+        <Link
+          to="/settings"
+          className={cn(
+            "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent",
+            matchRoute({ to: "/settings" }) && "bg-accent",
+          )}
+        >
+          {t("nav.settings")}
+        </Link>
+
         <h2 className="mt-4 mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {t("nav.categories")}
         </h2>

@@ -14,6 +14,7 @@ import (
 	"github.com/tobi/contracts/backend/internal/middleware"
 	"github.com/tobi/contracts/backend/internal/model"
 	"github.com/tobi/contracts/backend/internal/store"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // mockStore implements store.Store in memory for handler tests.
@@ -21,6 +22,8 @@ type mockStore struct {
 	categories map[uuid.UUID]model.Category
 	contracts  map[uuid.UUID]model.Contract
 	users      map[string]model.User // keyed by email
+	usersById  map[string]model.User // keyed by ID
+	settings   map[string]model.UserSettings
 }
 
 func newMockStore() *mockStore {
@@ -28,6 +31,8 @@ func newMockStore() *mockStore {
 		categories: make(map[uuid.UUID]model.Category),
 		contracts:  make(map[uuid.UUID]model.Contract),
 		users:      make(map[string]model.User),
+		usersById:  make(map[string]model.User),
+		settings:   make(map[string]model.UserSettings),
 	}
 }
 
@@ -36,6 +41,7 @@ func (m *mockStore) CreateUser(_ context.Context, u model.User) error {
 		return store.ErrConflict
 	}
 	m.users[u.Email] = u
+	m.usersById[u.ID.String()] = u
 	return nil
 }
 
@@ -45,6 +51,36 @@ func (m *mockStore) GetUserByEmail(_ context.Context, email string) (model.User,
 		return u, store.ErrNotFound
 	}
 	return u, nil
+}
+
+func (m *mockStore) GetUserByID(_ context.Context, id string) (model.User, error) {
+	u, ok := m.usersById[id]
+	if !ok {
+		return u, store.ErrNotFound
+	}
+	return u, nil
+}
+
+func (m *mockStore) UpdateUser(_ context.Context, u model.User) error {
+	if _, ok := m.usersById[u.ID.String()]; !ok {
+		return store.ErrNotFound
+	}
+	m.usersById[u.ID.String()] = u
+	m.users[u.Email] = u
+	return nil
+}
+
+func (m *mockStore) GetSettings(_ context.Context, userID string) (model.UserSettings, error) {
+	s, ok := m.settings[userID]
+	if !ok {
+		return model.DefaultUserSettings(), nil
+	}
+	return s, nil
+}
+
+func (m *mockStore) UpdateSettings(_ context.Context, userID string, s model.UserSettings) error {
+	m.settings[userID] = s
+	return nil
 }
 
 func (m *mockStore) ListCategories(_ context.Context, _ string) ([]model.Category, error) {
@@ -162,6 +198,9 @@ func newMux(h *Handler) http.Handler {
 	mux.HandleFunc("PUT /api/v1/contracts/{id}", h.UpdateContract)
 	mux.HandleFunc("DELETE /api/v1/contracts/{id}", h.DeleteContract)
 	mux.HandleFunc("GET /api/v1/summary", h.Summary)
+	mux.HandleFunc("GET /api/v1/settings", h.GetSettings)
+	mux.HandleFunc("PUT /api/v1/settings", h.UpdateSettings)
+	mux.HandleFunc("PUT /api/v1/settings/password", h.ChangePassword)
 	// Inject test user into context for all requests
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := middleware.SetUserID(r.Context(), testUserID)
@@ -604,5 +643,131 @@ func TestResponses_HaveJSONContentType(t *testing.T) {
 	ct := rec.Header().Get("Content-Type")
 	if ct != "application/json" {
 		t.Errorf("Content-Type = %q, want %q", ct, "application/json")
+	}
+}
+
+// Settings handler tests
+
+func TestGetSettings_ReturnsDefaults(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/api/v1/settings", nil)
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+
+	s := decodeJSON[model.UserSettings](t, rec)
+	if s.RenewalDays != 90 {
+		t.Errorf("RenewalDays = %d, want 90", s.RenewalDays)
+	}
+}
+
+func TestUpdateSettings_Success(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("PUT", "/api/v1/settings", jsonBody(map[string]int{"renewalDays": 30}))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d; body: %s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	s := decodeJSON[model.UserSettings](t, rec)
+	if s.RenewalDays != 30 {
+		t.Errorf("RenewalDays = %d, want 30", s.RenewalDays)
+	}
+
+	// Verify persisted
+	rec = httptest.NewRecorder()
+	req = httptest.NewRequest("GET", "/api/v1/settings", nil)
+	mux.ServeHTTP(rec, req)
+
+	s = decodeJSON[model.UserSettings](t, rec)
+	if s.RenewalDays != 30 {
+		t.Errorf("persisted RenewalDays = %d, want 30", s.RenewalDays)
+	}
+}
+
+func TestUpdateSettings_InvalidRange(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	for _, days := range []int{0, -1, 366} {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("PUT", "/api/v1/settings", jsonBody(map[string]int{"renewalDays": days}))
+		mux.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("days=%d: status = %d, want %d", days, rec.Code, http.StatusBadRequest)
+		}
+	}
+}
+
+func TestChangePassword_Success(t *testing.T) {
+	h, ms := newTestHandler()
+	mux := newMux(h)
+
+	// Create a user with known ID matching testUserID
+	uid, _ := uuid.Parse(testUserID)
+	hash, _ := bcrypt.GenerateFromPassword([]byte("oldpass"), bcrypt.DefaultCost)
+	ms.usersById[testUserID] = model.User{ID: uid, Email: "test@test.com", PasswordHash: string(hash)}
+	ms.users["test@test.com"] = ms.usersById[testUserID]
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("PUT", "/api/v1/settings/password", jsonBody(map[string]string{
+		"currentPassword": "oldpass",
+		"newPassword":     "newpass",
+	}))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d; body: %s", rec.Code, http.StatusNoContent, rec.Body.String())
+	}
+
+	// Verify new password works
+	updated := ms.usersById[testUserID]
+	if err := bcrypt.CompareHashAndPassword([]byte(updated.PasswordHash), []byte("newpass")); err != nil {
+		t.Error("new password should be valid after change")
+	}
+}
+
+func TestChangePassword_WrongCurrent(t *testing.T) {
+	h, ms := newTestHandler()
+	mux := newMux(h)
+
+	uid, _ := uuid.Parse(testUserID)
+	hash, _ := bcrypt.GenerateFromPassword([]byte("correct"), bcrypt.DefaultCost)
+	ms.usersById[testUserID] = model.User{ID: uid, Email: "test@test.com", PasswordHash: string(hash)}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("PUT", "/api/v1/settings/password", jsonBody(map[string]string{
+		"currentPassword": "wrong",
+		"newPassword":     "newpass",
+	}))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusUnauthorized)
+	}
+}
+
+func TestChangePassword_MissingFields(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("PUT", "/api/v1/settings/password", jsonBody(map[string]string{
+		"currentPassword": "old",
+	}))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
 	}
 }

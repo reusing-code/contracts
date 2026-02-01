@@ -10,6 +10,11 @@ import (
 type Store interface {
 	CreateUser(ctx context.Context, u model.User) error
 	GetUserByEmail(ctx context.Context, email string) (model.User, error)
+	GetUserByID(ctx context.Context, id string) (model.User, error)
+	UpdateUser(ctx context.Context, u model.User) error
+
+	GetSettings(ctx context.Context, userID string) (model.UserSettings, error)
+	UpdateSettings(ctx context.Context, userID string, s model.UserSettings) error
 
 	ListCategories(ctx context.Context, userID string) ([]model.Category, error)
 	GetCategory(ctx context.Context, userID string, id uuid.UUID) (model.Category, error)

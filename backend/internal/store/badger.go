@@ -131,6 +131,79 @@ func (s *BadgerStore) CreateUser(_ context.Context, u model.User) error {
 	})
 }
 
+func (s *BadgerStore) GetUserByID(_ context.Context, id string) (model.User, error) {
+	uid, err := uuid.Parse(id)
+	if err != nil {
+		return model.User{}, ErrNotFound
+	}
+	var user model.User
+	err = s.db.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(usrKey(uid))
+		if err != nil {
+			return err
+		}
+		return item.Value(func(val []byte) error {
+			var su storableUser
+			if err := json.Unmarshal(val, &su); err != nil {
+				return err
+			}
+			user = su.toModel()
+			return nil
+		})
+	})
+	if errors.Is(err, badger.ErrKeyNotFound) {
+		return user, ErrNotFound
+	}
+	return user, err
+}
+
+func (s *BadgerStore) UpdateUser(_ context.Context, u model.User) error {
+	data, err := json.Marshal(toStorableUser(u))
+	if err != nil {
+		return err
+	}
+	return s.db.Update(func(txn *badger.Txn) error {
+		if _, err := txn.Get(usrKey(u.ID)); err != nil {
+			if errors.Is(err, badger.ErrKeyNotFound) {
+				return ErrNotFound
+			}
+			return err
+		}
+		return txn.Set(usrKey(u.ID), data)
+	})
+}
+
+func settingsKey(userID string) []byte {
+	return []byte(fmt.Sprintf("u/%s/settings", userID))
+}
+
+func (s *BadgerStore) GetSettings(_ context.Context, userID string) (model.UserSettings, error) {
+	var settings model.UserSettings
+	err := s.db.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(settingsKey(userID))
+		if err != nil {
+			return err
+		}
+		return item.Value(func(val []byte) error {
+			return json.Unmarshal(val, &settings)
+		})
+	})
+	if errors.Is(err, badger.ErrKeyNotFound) {
+		return model.DefaultUserSettings(), nil
+	}
+	return settings, err
+}
+
+func (s *BadgerStore) UpdateSettings(_ context.Context, userID string, st model.UserSettings) error {
+	data, err := json.Marshal(st)
+	if err != nil {
+		return err
+	}
+	return s.db.Update(func(txn *badger.Txn) error {
+		return txn.Set(settingsKey(userID), data)
+	})
+}
+
 func (s *BadgerStore) GetUserByEmail(_ context.Context, email string) (model.User, error) {
 	var user model.User
 	err := s.db.View(func(txn *badger.Txn) error {
