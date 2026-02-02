@@ -1,6 +1,11 @@
 import type { Contract, ContractFormData } from "@/types/contract"
 import type { Summary } from "@/types/summary"
-import { del, get, post, put } from "./api"
+import { del, get, getToken, post, put } from "./api"
+
+export interface ImportResult {
+  created: number
+  errors: { row: number; error: string }[]
+}
 
 export async function getAllContracts(): Promise<Contract[]> {
   return get<Contract[]>("/contracts")
@@ -32,4 +37,24 @@ export async function getUpcomingRenewals(days: number = 365): Promise<Contract[
 
 export async function getSummary(): Promise<Summary> {
   return get<Summary>("/summary")
+}
+
+export async function importContracts(file: File): Promise<ImportResult> {
+  const form = new FormData()
+  form.append("file", file)
+  const headers: Record<string, string> = {}
+  const token = getToken()
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
+  }
+  const res = await fetch("/api/v1/contracts/import", {
+    method: "POST",
+    headers,
+    body: form,
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.error ?? res.statusText)
+  }
+  return res.json()
 }

@@ -100,9 +100,28 @@
     "passwordChanged": "Password changed successfully.",
     "passwordChangeFailed": "Failed to change password."
   },
+  "import": {
+    "button": "Import",
+    "title": "Import Contracts",
+    "tabFile": "Upload File",
+    "tabPaste": "Paste JSON",
+    "selectFile": "Select JSON file…",
+    "pastePlaceholder": "Paste your JSON array here…",
+    "upload": "Upload",
+    "uploading": "Uploading…",
+    "success": "{{count}} contract(s) imported successfully.",
+    "partial": "{{created}} imported, {{errors}} error(s).",
+    "createdCount": "{{count}} contract(s) created.",
+    "errorsTitle": "Errors:",
+    "rowError": "Row {{row}}: {{error}}",
+    "specTitle": "JSON Format Specification",
+    "copySpec": "Copy",
+    "copied": "Copied!"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
+    "close": "Close",
     "delete": "Delete",
     "edit": "Edit",
     "actions": "Actions",

@@ -2,7 +2,7 @@ import { useState } from "react"
 import { createRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { Plus } from "lucide-react"
+import { Plus, Upload } from "lucide-react"
 import { rootRoute } from "./__root"
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/use-categories"
 import { getSummary } from "@/lib/contract-repository"
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { CategoryCard } from "@/components/category-card"
 import { CategoryDialog } from "@/components/category-dialog"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { ImportDialog } from "@/components/import-dialog"
 
 export const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -34,6 +35,7 @@ function DashboardPage() {
   const deleteCategory = useDeleteCategory()
 
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null)
 
@@ -62,10 +64,16 @@ function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t("dashboard.title")}</h1>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t("dashboard.newCategory")}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            {t("import.button")}
+          </Button>
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            {t("dashboard.newCategory")}
+          </Button>
+        </div>
       </div>
 
       {categories.length === 0 ? (
@@ -101,6 +109,8 @@ function DashboardPage() {
         category={editingCategory}
         onSubmit={handleUpdate}
       />
+
+      <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
 
       <DeleteConfirmDialog
         open={!!deletingCategory}

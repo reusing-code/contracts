@@ -5,6 +5,7 @@ import {
   createContract,
   updateContract,
   deleteContract,
+  importContracts,
 } from "@/lib/contract-repository"
 import type { ContractFormData } from "@/types/contract"
 
@@ -53,6 +54,18 @@ export function useDeleteContract(categoryId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: contractsKey(categoryId) })
       qc.invalidateQueries({ queryKey: ["categories"] })
+    },
+  })
+}
+
+export function useImportContracts() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (file: File) => importContracts(file),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["contracts"] })
+      qc.invalidateQueries({ queryKey: ["categories"] })
+      qc.invalidateQueries({ queryKey: ["summary"] })
     },
   })
 }

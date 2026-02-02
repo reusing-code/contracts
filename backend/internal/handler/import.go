@@ -1,0 +1,128 @@
+package handler
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/tobi/contracts/backend/internal/middleware"
+	"github.com/tobi/contracts/backend/internal/model"
+)
+
+type contractImportEntry struct {
+	Category string `json:"category"`
+	model.ContractInput
+}
+
+type importResult struct {
+	Created int           `json:"created"`
+	Errors  []importError `json:"errors"`
+}
+
+type importError struct {
+	Row   int    `json:"row"`
+	Error string `json:"error"`
+}
+
+func (h *Handler) ImportContracts(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		h.errorResponse(w, http.StatusBadRequest, "invalid multipart form")
+		return
+	}
+
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		h.errorResponse(w, http.StatusBadRequest, "missing file field")
+		return
+	}
+	defer file.Close()
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		h.errorResponse(w, http.StatusBadRequest, "failed to read file")
+		return
+	}
+
+	var entries []contractImportEntry
+	if err := json.Unmarshal(data, &entries); err != nil {
+		h.errorResponse(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
+		return
+	}
+
+	categories, err := h.store.ListCategories(r.Context(), userID)
+	if err != nil {
+		h.handleStoreError(w, err)
+		return
+	}
+	catByName := make(map[string]uuid.UUID, len(categories))
+	for _, c := range categories {
+		catByName[strings.ToLower(c.Name)] = c.ID
+	}
+
+	result := importResult{Errors: []importError{}}
+	for i, entry := range entries {
+		row := i + 1
+
+		if entry.Category == "" {
+			result.Errors = append(result.Errors, importError{Row: row, Error: "category is required"})
+			continue
+		}
+		if err := entry.ContractInput.Validate(); err != nil {
+			result.Errors = append(result.Errors, importError{Row: row, Error: err.Error()})
+			continue
+		}
+
+		catID, ok := catByName[strings.ToLower(entry.Category)]
+		if !ok {
+			now := time.Now().UTC()
+			cat := model.Category{
+				ID:        uuid.New(),
+				Name:      entry.Category,
+				CreatedAt: now,
+				UpdatedAt: now,
+			}
+			if err := h.store.CreateCategory(r.Context(), userID, cat); err != nil {
+				result.Errors = append(result.Errors, importError{Row: row, Error: fmt.Sprintf("failed to create category: %v", err)})
+				continue
+			}
+			catID = cat.ID
+			catByName[strings.ToLower(entry.Category)] = catID
+		}
+
+		now := time.Now().UTC()
+		con := model.Contract{
+			ID:                      uuid.New(),
+			CategoryID:              catID,
+			Name:                    entry.Name,
+			ProductName:             entry.ProductName,
+			Company:                 entry.Company,
+			ContractNumber:          entry.ContractNumber,
+			CustomerNumber:          entry.CustomerNumber,
+			PricePerMonth:           entry.PricePerMonth,
+			StartDate:               entry.StartDate,
+			EndDate:                 entry.EndDate,
+			MinimumDurationMonths:   entry.MinimumDurationMonths,
+			ExtensionDurationMonths: entry.ExtensionDurationMonths,
+			NoticePeriodMonths:      entry.NoticePeriodMonths,
+			CustomerPortalURL:       entry.CustomerPortalURL,
+			PaperlessURL:            entry.PaperlessURL,
+			Comments:                entry.Comments,
+			CreatedAt:               now,
+			UpdatedAt:               now,
+		}
+
+		if err := h.store.CreateContract(r.Context(), userID, con); err != nil {
+			result.Errors = append(result.Errors, importError{Row: row, Error: fmt.Sprintf("failed to create contract: %v", err)})
+			continue
+		}
+		result.Created++
+	}
+
+	h.writeJSON(w, http.StatusOK, result)
+}

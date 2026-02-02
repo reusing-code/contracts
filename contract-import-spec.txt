@@ -1,0 +1,100 @@
+Contract Import JSON Specification
+====================================
+
+This document describes the JSON format accepted by the contract import
+endpoint (POST /api/v1/contracts/import). It is intended for AI agent
+consumption—e.g., an agent that extracts contract data from PDFs and
+produces this JSON.
+
+Format
+------
+The file must contain a JSON array of objects. Each object represents one
+contract to import.
+
+Fields
+------
+  category (string, REQUIRED)
+    Name of the category this contract belongs to.
+    If a category with this name does not yet exist, it will be created
+    automatically. Matching is case-insensitive.
+
+  name (string, REQUIRED)
+    Display name of the contract.
+
+  startDate (string, REQUIRED)
+    Contract start date in ISO 8601 format: YYYY-MM-DD.
+
+  company (string, optional)
+    Name of the company/provider.
+
+  productName (string, optional)
+    Name of the specific product or plan.
+
+  contractNumber (string, optional)
+    The provider's contract/policy number.
+
+  customerNumber (string, optional)
+    Your customer number with the provider.
+
+  pricePerMonth (number, optional)
+    Monthly cost in the user's currency. Use null or omit if unknown.
+
+  endDate (string, optional)
+    Contract end/cancellation date in YYYY-MM-DD format.
+    Only set this if the contract has been cancelled.
+
+  minimumDurationMonths (integer, optional, default 0)
+    Initial minimum commitment period in months.
+
+  extensionDurationMonths (integer, optional, default 0)
+    Automatic extension period in months after minimum duration.
+
+  noticePeriodMonths (integer, optional, default 0)
+    Required notice period before the next renewal in months.
+
+  customerPortalUrl (string, optional)
+    URL to the provider's customer portal for this contract.
+
+  paperlessUrl (string, optional)
+    URL to the contract document in a document management system.
+
+  comments (string, optional)
+    Free-text notes about the contract.
+
+Behavior
+--------
+- Valid rows are imported; invalid rows are skipped and reported as errors.
+- The response contains: { "created": N, "errors": [{ "row": N, "error": "..." }] }
+- Row numbers are 1-based.
+- Categories are matched by name (case-insensitive). If no match is found,
+  a new category is created with the exact name provided.
+
+Example
+-------
+[
+  {
+    "category": "Insurance",
+    "name": "Home Insurance",
+    "company": "Allianz",
+    "productName": "HomeCare Plus",
+    "contractNumber": "POL-2024-12345",
+    "customerNumber": "CU-98765",
+    "startDate": "2024-01-15",
+    "minimumDurationMonths": 24,
+    "extensionDurationMonths": 12,
+    "noticePeriodMonths": 3,
+    "pricePerMonth": 45.99,
+    "customerPortalUrl": "https://portal.allianz.com",
+    "comments": "Covers water damage and theft"
+  },
+  {
+    "category": "Telecommunications",
+    "name": "Mobile Plan",
+    "company": "Telekom",
+    "startDate": "2023-06-01",
+    "minimumDurationMonths": 24,
+    "extensionDurationMonths": 12,
+    "noticePeriodMonths": 3,
+    "pricePerMonth": 39.99
+  }
+]

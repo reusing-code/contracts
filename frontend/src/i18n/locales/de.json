@@ -100,9 +100,28 @@
     "passwordChanged": "Passwort erfolgreich geändert.",
     "passwordChangeFailed": "Passwort konnte nicht geändert werden."
   },
+  "import": {
+    "button": "Importieren",
+    "title": "Verträge importieren",
+    "tabFile": "Datei hochladen",
+    "tabPaste": "JSON einfügen",
+    "selectFile": "JSON-Datei auswählen…",
+    "pastePlaceholder": "JSON-Array hier einfügen…",
+    "upload": "Hochladen",
+    "uploading": "Wird hochgeladen…",
+    "success": "{{count}} Vertrag/Verträge erfolgreich importiert.",
+    "partial": "{{created}} importiert, {{errors}} Fehler.",
+    "createdCount": "{{count}} Vertrag/Verträge erstellt.",
+    "errorsTitle": "Fehler:",
+    "rowError": "Zeile {{row}}: {{error}}",
+    "specTitle": "JSON-Format-Spezifikation",
+    "copySpec": "Kopieren",
+    "copied": "Kopiert!"
+  },
   "common": {
     "save": "Speichern",
     "cancel": "Abbrechen",
+    "close": "Schließen",
     "delete": "Löschen",
     "edit": "Bearbeiten",
     "actions": "Aktionen",

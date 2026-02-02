@@ -56,6 +56,7 @@ func (s *Server) Run() error {
 	apiMux.HandleFunc("DELETE /api/v1/categories/{id}", h.DeleteCategory)
 	apiMux.HandleFunc("GET /api/v1/categories/{id}/contracts", h.ListContractsByCategory)
 	apiMux.HandleFunc("POST /api/v1/categories/{id}/contracts", h.CreateContractInCategory)
+	apiMux.HandleFunc("POST /api/v1/contracts/import", h.ImportContracts)
 	apiMux.HandleFunc("GET /api/v1/contracts/upcoming-renewals", h.UpcomingRenewals)
 	apiMux.HandleFunc("GET /api/v1/contracts", h.ListContracts)
 	apiMux.HandleFunc("GET /api/v1/contracts/{id}", h.GetContract)
