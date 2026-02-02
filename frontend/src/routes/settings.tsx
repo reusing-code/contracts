@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -22,16 +23,18 @@ function SettingsPage() {
   const changePassword = useChangePassword()
 
   const [renewalDays, setRenewalDays] = useState<number | null>(null)
+  const [reminderFrequency, setReminderFrequency] = useState<string | null>(null)
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
 
   const displayDays = renewalDays ?? settings?.renewalDays ?? 90
+  const displayFrequency = reminderFrequency ?? settings?.reminderFrequency ?? "disabled"
 
   function handleSavePreferences(e: React.FormEvent) {
     e.preventDefault()
     updateSettings.mutate(
-      { renewalDays: displayDays },
+      { renewalDays: displayDays, reminderFrequency: displayFrequency },
       {
         onSuccess: () => toast.success(t("settings.saved")),
         onError: () => toast.error(t("settings.saveFailed")),
@@ -71,18 +74,34 @@ function SettingsPage() {
           <CardDescription>{t("settings.preferencesDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSavePreferences} className="flex items-end gap-4">
+          <form onSubmit={handleSavePreferences} className="space-y-4">
+            <div className="flex items-end gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="renewalDays">{t("settings.renewalDays")}</Label>
+                <Input
+                  id="renewalDays"
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={displayDays}
+                  onChange={(e) => setRenewalDays(Number(e.target.value))}
+                  className="w-32"
+                />
+              </div>
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="renewalDays">{t("settings.renewalDays")}</Label>
-              <Input
-                id="renewalDays"
-                type="number"
-                min={1}
-                max={365}
-                value={displayDays}
-                onChange={(e) => setRenewalDays(Number(e.target.value))}
-                className="w-32"
-              />
+              <Label htmlFor="reminderFrequency">{t("settings.reminderFrequency")}</Label>
+              <Select value={displayFrequency} onValueChange={setReminderFrequency}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="disabled">{t("settings.reminderDisabled")}</SelectItem>
+                  <SelectItem value="weekly">{t("settings.reminderWeekly")}</SelectItem>
+                  <SelectItem value="biweekly">{t("settings.reminderBiweekly")}</SelectItem>
+                  <SelectItem value="monthly">{t("settings.reminderMonthly")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <Button type="submit" disabled={updateSettings.isPending}>
               {t("common.save")}

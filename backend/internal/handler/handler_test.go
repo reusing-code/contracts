@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"log/slog"
 
@@ -168,6 +169,14 @@ func (m *mockStore) DeleteContract(_ context.Context, _ string, id uuid.UUID) er
 	}
 	delete(m.contracts, id)
 	return nil
+}
+
+func (m *mockStore) ListUsers(_ context.Context) ([]model.User, error) {
+	out := make([]model.User, 0, len(m.usersById))
+	for _, u := range m.usersById {
+		out = append(out, u)
+	}
+	return out, nil
 }
 
 func (m *mockStore) Close() error { return nil }
@@ -660,9 +669,37 @@ func TestGetSettings_ReturnsDefaults(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
 	}
 
-	s := decodeJSON[model.UserSettings](t, rec)
+	s := decodeJSON[model.SettingsResponse](t, rec)
 	if s.RenewalDays != 90 {
 		t.Errorf("RenewalDays = %d, want 90", s.RenewalDays)
+	}
+	if s.ReminderFrequency != "disabled" {
+		t.Errorf("ReminderFrequency = %q, want %q", s.ReminderFrequency, "disabled")
+	}
+}
+
+func TestGetSettings_OmitsLastReminderSent(t *testing.T) {
+	h, ms := newTestHandler()
+	mux := newMux(h)
+
+	ms.settings[testUserID] = model.UserSettings{
+		RenewalDays:       90,
+		ReminderFrequency: "weekly",
+		LastReminderSent:  time.Now(),
+	}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/api/v1/settings", nil)
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+
+	var raw map[string]any
+	json.NewDecoder(rec.Body).Decode(&raw)
+	if _, ok := raw["lastReminderSent"]; ok {
+		t.Error("response should not contain lastReminderSent")
 	}
 }
 
@@ -671,16 +708,19 @@ func TestUpdateSettings_Success(t *testing.T) {
 	mux := newMux(h)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("PUT", "/api/v1/settings", jsonBody(map[string]int{"renewalDays": 30}))
+	req := httptest.NewRequest("PUT", "/api/v1/settings", jsonBody(map[string]any{"renewalDays": 30, "reminderFrequency": "weekly"}))
 	mux.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d; body: %s", rec.Code, http.StatusOK, rec.Body.String())
 	}
 
-	s := decodeJSON[model.UserSettings](t, rec)
+	s := decodeJSON[model.SettingsResponse](t, rec)
 	if s.RenewalDays != 30 {
 		t.Errorf("RenewalDays = %d, want 30", s.RenewalDays)
+	}
+	if s.ReminderFrequency != "weekly" {
+		t.Errorf("ReminderFrequency = %q, want %q", s.ReminderFrequency, "weekly")
 	}
 
 	// Verify persisted
@@ -688,7 +728,7 @@ func TestUpdateSettings_Success(t *testing.T) {
 	req = httptest.NewRequest("GET", "/api/v1/settings", nil)
 	mux.ServeHTTP(rec, req)
 
-	s = decodeJSON[model.UserSettings](t, rec)
+	s = decodeJSON[model.SettingsResponse](t, rec)
 	if s.RenewalDays != 30 {
 		t.Errorf("persisted RenewalDays = %d, want 30", s.RenewalDays)
 	}
@@ -769,5 +809,55 @@ func TestChangePassword_MissingFields(t *testing.T) {
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestUpdateSettings_InvalidReminderFrequency(t *testing.T) {
+	h, _ := newTestHandler()
+	mux := newMux(h)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("PUT", "/api/v1/settings", jsonBody(map[string]any{
+		"renewalDays":       30,
+		"reminderFrequency": "daily",
+	}))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestUpdateSettings_PreservesLastReminderSent(t *testing.T) {
+	h, ms := newTestHandler()
+	mux := newMux(h)
+
+	sent := time.Date(2025, 6, 15, 10, 0, 0, 0, time.UTC)
+	ms.settings[testUserID] = model.UserSettings{
+		RenewalDays:       90,
+		ReminderFrequency: "weekly",
+		LastReminderSent:  sent,
+	}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("PUT", "/api/v1/settings", jsonBody(map[string]any{
+		"renewalDays":       60,
+		"reminderFrequency": "monthly",
+	}))
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d; body: %s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	persisted := ms.settings[testUserID]
+	if !persisted.LastReminderSent.Equal(sent) {
+		t.Errorf("LastReminderSent = %v, want %v", persisted.LastReminderSent, sent)
+	}
+	if persisted.RenewalDays != 60 {
+		t.Errorf("RenewalDays = %d, want 60", persisted.RenewalDays)
+	}
+	if persisted.ReminderFrequency != "monthly" {
+		t.Errorf("ReminderFrequency = %q, want %q", persisted.ReminderFrequency, "monthly")
 	}
 }

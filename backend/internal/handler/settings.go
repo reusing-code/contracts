@@ -8,6 +8,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var validReminderFrequencies = map[string]bool{
+	"disabled":  true,
+	"weekly":    true,
+	"biweekly":  true,
+	"monthly":   true,
+}
+
 func (h *Handler) GetSettings(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	settings, err := h.store.GetSettings(r.Context(), userID)
@@ -15,11 +22,19 @@ func (h *Handler) GetSettings(w http.ResponseWriter, r *http.Request) {
 		h.handleStoreError(w, err)
 		return
 	}
-	h.writeJSON(w, http.StatusOK, settings)
+	h.writeJSON(w, http.StatusOK, model.SettingsResponse{
+		RenewalDays:       settings.RenewalDays,
+		ReminderFrequency: settings.ReminderFrequency,
+	})
+}
+
+type updateSettingsRequest struct {
+	RenewalDays       int    `json:"renewalDays"`
+	ReminderFrequency string `json:"reminderFrequency"`
 }
 
 func (h *Handler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
-	var req model.UserSettings
+	var req updateSettingsRequest
 	if err := h.readJSON(r, &req); err != nil {
 		h.errorResponse(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -28,13 +43,31 @@ func (h *Handler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 		h.errorResponse(w, http.StatusBadRequest, "renewalDays must be between 1 and 365")
 		return
 	}
+	if req.ReminderFrequency != "" && !validReminderFrequencies[req.ReminderFrequency] {
+		h.errorResponse(w, http.StatusBadRequest, "reminderFrequency must be one of: disabled, weekly, biweekly, monthly")
+		return
+	}
 
 	userID := middleware.GetUserID(r.Context())
-	if err := h.store.UpdateSettings(r.Context(), userID, req); err != nil {
+	current, err := h.store.GetSettings(r.Context(), userID)
+	if err != nil {
 		h.handleStoreError(w, err)
 		return
 	}
-	h.writeJSON(w, http.StatusOK, req)
+
+	current.RenewalDays = req.RenewalDays
+	if req.ReminderFrequency != "" {
+		current.ReminderFrequency = req.ReminderFrequency
+	}
+
+	if err := h.store.UpdateSettings(r.Context(), userID, current); err != nil {
+		h.handleStoreError(w, err)
+		return
+	}
+	h.writeJSON(w, http.StatusOK, model.SettingsResponse{
+		RenewalDays:       current.RenewalDays,
+		ReminderFrequency: current.ReminderFrequency,
+	})
 }
 
 type changePasswordRequest struct {

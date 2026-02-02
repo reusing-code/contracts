@@ -173,6 +173,34 @@ func (s *BadgerStore) UpdateUser(_ context.Context, u model.User) error {
 	})
 }
 
+func (s *BadgerStore) ListUsers(_ context.Context) ([]model.User, error) {
+	var users []model.User
+	prefix := []byte("usr/")
+
+	err := s.db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			var su storableUser
+			if err := it.Item().Value(func(val []byte) error {
+				return json.Unmarshal(val, &su)
+			}); err != nil {
+				return err
+			}
+			users = append(users, su.toModel())
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if users == nil {
+		users = []model.User{}
+	}
+	return users, nil
+}
+
 func settingsKey(userID string) []byte {
 	return []byte(fmt.Sprintf("u/%s/settings", userID))
 }

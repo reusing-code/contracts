@@ -17,6 +17,7 @@ import (
 	"github.com/tobi/contracts/backend/internal/email"
 	"github.com/tobi/contracts/backend/internal/handler"
 	"github.com/tobi/contracts/backend/internal/middleware"
+	"github.com/tobi/contracts/backend/internal/reminder"
 	"github.com/tobi/contracts/backend/internal/store"
 )
 
@@ -33,6 +34,17 @@ func New(cfg config.Config, logger *slog.Logger, s store.Store) *Server {
 func (s *Server) Run() error {
 	jwtSecret := []byte(s.cfg.JWTSecret)
 	emailClient := email.NewClient(s.cfg)
+
+	shutdownCtx, shutdownCancel := context.WithCancel(context.Background())
+	defer shutdownCancel()
+
+	if emailClient.IsConfigured() {
+		sched := reminder.New(s.store, emailClient, s.logger)
+		sched.Start(shutdownCtx)
+	} else {
+		s.logger.Info("SMTP not configured, reminder scheduler disabled")
+	}
+
 	h := handler.New(s.store, s.logger, jwtSecret, emailClient)
 
 	// Protected API routes (require auth)

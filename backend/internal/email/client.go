@@ -31,6 +31,8 @@ func NewClient(cfg config.Config) *Client {
 	}
 }
 
+func (c *Client) IsConfigured() bool { return c.host != "" }
+
 func (c *Client) Send(to []string, subject, body string) error {
 	if c.host == "" {
 		return fmt.Errorf("SMTP host not configured")
