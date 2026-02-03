@@ -4,6 +4,7 @@ RUN npm install -g bun
 COPY frontend/package.json frontend/bun.lock* ./
 RUN bun install --frozen-lockfile
 COPY frontend/ .
+COPY contract-import-spec.txt ../
 RUN bun run build
 
 FROM golang:1.25-alpine AS backend

@@ -315,7 +315,7 @@ func TestIntegration_UpcomingRenewals(t *testing.T) {
 	// Fetch with large window — should include the contract
 	resp = doJSON(t, "GET", base+"/api/v1/contracts/upcoming-renewals?days=365", nil)
 	expectStatus(t, resp, 200)
-	renewals = decode[[]map[string]any](t, resp)
+	_ = decode[[]map[string]any](t, resp)
 	// The contract may or may not appear depending on its calculated date.
 	// Just verify it's valid JSON and doesn't error.
 
