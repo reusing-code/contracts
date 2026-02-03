@@ -126,6 +126,7 @@
     "edit": "Edit",
     "actions": "Actions",
     "confirm": "Are you sure?",
-    "currency": "€"
+    "currency": "€",
+    "months": "months"
   }
 }

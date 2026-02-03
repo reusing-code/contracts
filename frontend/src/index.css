@@ -121,3 +121,26 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes collapse {
+  from {
+    height: var(--radix-collapsible-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+@keyframes expand {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+  }
+}
+
+@theme inline {
+  --animate-collapse: collapse 150ms ease-out;
+  --animate-expand: expand 150ms ease-out;
+}
