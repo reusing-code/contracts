@@ -24,7 +24,7 @@ A self-hosted contract management application for tracking subscriptions, renewa
 
 ### Prerequisites
 
-- [Go 1.22+](https://go.dev/dl/)
+- [Go 1.25+](https://go.dev/dl/)
 - [Bun](https://bun.sh)
 - [Task](https://taskfile.dev) — `go install github.com/go-task/task/v3/cmd/task@latest`
 - [Air](https://github.com/air-verse/air) — `go install github.com/air-verse/air@latest`
@@ -35,7 +35,7 @@ A self-hosted contract management application for tracking subscriptions, renewa
 task dev
 ```
 
-This starts the Go backend (port 8080) with live reload and the Vite dev server (port 5173) with API proxying. Open http://localhost:5173.
+This starts the Go backend (port 8080) with live reload and the Vite dev server (port 5173) with API proxying. Open <http://localhost:5173>.
 
 ### Docker
 
