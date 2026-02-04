@@ -77,6 +77,10 @@ All endpoints under `/api/v1/`. Auth endpoints are public; everything else requi
 
 Health (`/healthz`), readiness (`/readyz`), and Prometheus metrics (`/metrics`) are available at the root.
 
+## AI Disclaimer
+
+This project was developed with the assistance of AI tools and continues to use AI in its development.
+
 ## License
 
 [MIT](LICENSE)
