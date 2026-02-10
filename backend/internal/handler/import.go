@@ -18,6 +18,14 @@ type contractImportEntry struct {
 	model.ContractInput
 }
 
+// categoryTranslations maps nameKey to known translations (all lowercase).
+// Used during import to match translated category names to existing categories.
+var categoryTranslations = map[string][]string{
+	"categoryNames.insurance":          {"versicherung", "versicherungen"},
+	"categoryNames.banking":            {"banking / portfolios", "bankwesen", "finanzen"},
+	"categoryNames.telecommunications": {"telekommunikation"},
+}
+
 type importResult struct {
 	Created int           `json:"created"`
 	Errors  []importError `json:"errors"`
@@ -63,6 +71,20 @@ func (h *Handler) ImportContracts(w http.ResponseWriter, r *http.Request) {
 	catByName := make(map[string]uuid.UUID, len(categories))
 	for _, c := range categories {
 		catByName[strings.ToLower(c.Name)] = c.ID
+		if c.NameKey != "" {
+			if suffix, ok := strings.CutPrefix(c.NameKey, "categoryNames."); ok {
+				if _, exists := catByName[suffix]; !exists {
+					catByName[suffix] = c.ID
+				}
+			}
+			if translations, ok := categoryTranslations[c.NameKey]; ok {
+				for _, t := range translations {
+					if _, exists := catByName[t]; !exists {
+						catByName[t] = c.ID
+					}
+				}
+			}
+		}
 	}
 
 	result := importResult{Errors: []importError{}}

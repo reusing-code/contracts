@@ -15,8 +15,19 @@ Fields
 ------
   category (string, REQUIRED)
     Name of the category this contract belongs to.
+    IMPORTANT: Always use the English category name. The application stores
+    categories in English and translates them in the UI. Using a translated
+    name (e.g. German) may create a duplicate category.
+
+    Predefined categories (use these exact names when applicable):
+      - Insurance       (or shorthand: "insurance")
+      - Banking / Portfolios  (or shorthand: "banking")
+      - Telecommunications    (or shorthand: "telecommunications")
+
     If a category with this name does not yet exist, it will be created
-    automatically. Matching is case-insensitive.
+    automatically. Matching is case-insensitive. Common translations
+    (e.g. "Versicherung" → Insurance) are also recognized, but using
+    English names is strongly preferred.
 
   name (string, REQUIRED)
     Display name of the contract.
@@ -66,7 +77,8 @@ Behavior
 - Valid rows are imported; invalid rows are skipped and reported as errors.
 - The response contains: { "created": N, "errors": [{ "row": N, "error": "..." }] }
 - Row numbers are 1-based.
-- Categories are matched by name (case-insensitive). If no match is found,
+- Categories are matched by name (case-insensitive). Known translations of
+  predefined categories (e.g. German) are also matched. If no match is found,
   a new category is created with the exact name provided.
 
 Example
