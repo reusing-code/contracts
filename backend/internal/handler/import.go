@@ -118,6 +118,10 @@ func (h *Handler) ImportContracts(w http.ResponseWriter, r *http.Request) {
 		}
 
 		now := time.Now().UTC()
+		bi := entry.BillingInterval
+		if bi == "" {
+			bi = model.BillingMonthly
+		}
 		con := model.Contract{
 			ID:                      uuid.New(),
 			CategoryID:              catID,
@@ -126,7 +130,8 @@ func (h *Handler) ImportContracts(w http.ResponseWriter, r *http.Request) {
 			Company:                 entry.Company,
 			ContractNumber:          entry.ContractNumber,
 			CustomerNumber:          entry.CustomerNumber,
-			PricePerMonth:           entry.PricePerMonth,
+			Price:                   entry.Price,
+			BillingInterval:         bi,
 			StartDate:               entry.StartDate,
 			EndDate:                 entry.EndDate,
 			MinimumDurationMonths:   entry.MinimumDurationMonths,

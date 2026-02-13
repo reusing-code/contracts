@@ -1,4 +1,4 @@
-export type FieldType = "text" | "number" | "date" | "url" | "textarea"
+export type FieldType = "text" | "number" | "date" | "url" | "textarea" | "billingInterval"
 
 export interface FieldConfig {
   key: string
@@ -15,7 +15,8 @@ export const contractFields: FieldConfig[] = [
   { key: "company", type: "text", i18nKey: "fields.company", required: false, showInTable: true, tableOrder: 2 },
   { key: "contractNumber", type: "text", i18nKey: "fields.contractNumber", required: false, showInTable: false, tableOrder: -1 },
   { key: "customerNumber", type: "text", i18nKey: "fields.customerNumber", required: false, showInTable: false, tableOrder: -1 },
-  { key: "pricePerMonth", type: "number", i18nKey: "fields.pricePerMonth", required: false, showInTable: true, tableOrder: 3 },
+  { key: "price", type: "number", i18nKey: "fields.price", required: false, showInTable: true, tableOrder: 3 },
+  { key: "billingInterval", type: "billingInterval", i18nKey: "fields.billingInterval", required: true, showInTable: false, tableOrder: -1 },
   { key: "startDate", type: "date", i18nKey: "fields.startDate", required: true, showInTable: true, tableOrder: 4 },
   { key: "endDate", type: "date", i18nKey: "fields.endDate", required: false, showInTable: false, tableOrder: -1 },
   { key: "minimumDurationMonths", type: "number", i18nKey: "fields.minimumDuration", required: true, showInTable: false, tableOrder: -1 },

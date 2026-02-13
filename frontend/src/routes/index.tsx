@@ -86,6 +86,7 @@ function DashboardPage() {
               category={cat}
               contractCount={summaryByCategory.get(cat.id)?.contractCount ?? 0}
               monthlyTotal={summaryByCategory.get(cat.id)?.monthlyTotal ?? 0}
+              yearlyTotal={summaryByCategory.get(cat.id)?.yearlyTotal ?? 0}
               onEdit={() => {
                 setEditingCategory(cat)
               }}

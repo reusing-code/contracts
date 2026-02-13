@@ -11,6 +11,13 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface ContractFormFieldProps {
   config: FieldConfig
@@ -31,7 +38,20 @@ export function ContractFormField({ config, control }: ContractFormFieldProps) {
             {config.required && " *"}
           </FormLabel>
           <FormControl>
-            {config.type === "textarea" ? (
+            {config.type === "billingInterval" ? (
+              <Select
+                value={(field.value as string) ?? "monthly"}
+                onValueChange={field.onChange}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">{t("fields.billingMonthly")}</SelectItem>
+                  <SelectItem value="yearly">{t("fields.billingYearly")}</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : config.type === "textarea" ? (
               <Textarea
                 {...field}
                 value={(field.value as string) ?? ""}

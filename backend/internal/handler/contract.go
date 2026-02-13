@@ -57,6 +57,10 @@ func (h *Handler) CreateContractInCategory(w http.ResponseWriter, r *http.Reques
 	}
 
 	now := time.Now().UTC()
+	bi := input.BillingInterval
+	if bi == "" {
+		bi = model.BillingMonthly
+	}
 	con := model.Contract{
 		ID:                      uuid.New(),
 		CategoryID:              catID,
@@ -65,7 +69,8 @@ func (h *Handler) CreateContractInCategory(w http.ResponseWriter, r *http.Reques
 		Company:                 input.Company,
 		ContractNumber:          input.ContractNumber,
 		CustomerNumber:          input.CustomerNumber,
-		PricePerMonth:           input.PricePerMonth,
+		Price:                   input.Price,
+		BillingInterval:         bi,
 		StartDate:               input.StartDate,
 		EndDate:                 input.EndDate,
 		MinimumDurationMonths:   input.MinimumDurationMonths,
@@ -128,7 +133,12 @@ func (h *Handler) UpdateContract(w http.ResponseWriter, r *http.Request) {
 	existing.Company = input.Company
 	existing.ContractNumber = input.ContractNumber
 	existing.CustomerNumber = input.CustomerNumber
-	existing.PricePerMonth = input.PricePerMonth
+	existing.Price = input.Price
+	bi := input.BillingInterval
+	if bi == "" {
+		bi = model.BillingMonthly
+	}
+	existing.BillingInterval = bi
 	existing.StartDate = input.StartDate
 	existing.EndDate = input.EndDate
 	existing.MinimumDurationMonths = input.MinimumDurationMonths

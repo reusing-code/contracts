@@ -12,12 +12,14 @@ type categorySummary struct {
 	Name          string    `json:"name"`
 	ContractCount int       `json:"contractCount"`
 	MonthlyTotal  float64   `json:"monthlyTotal"`
+	YearlyTotal   float64   `json:"yearlyTotal"`
 }
 
 type summaryResponse struct {
-	TotalContracts    int               `json:"totalContracts"`
-	TotalMonthlyAmount float64          `json:"totalMonthlyAmount"`
-	Categories        []categorySummary `json:"categories"`
+	TotalContracts     int               `json:"totalContracts"`
+	TotalMonthlyAmount float64           `json:"totalMonthlyAmount"`
+	TotalYearlyAmount  float64           `json:"totalYearlyAmount"`
+	Categories         []categorySummary `json:"categories"`
 }
 
 func (h *Handler) Summary(w http.ResponseWriter, r *http.Request) {
@@ -37,13 +39,14 @@ func (h *Handler) Summary(w http.ResponseWriter, r *http.Request) {
 	type agg struct {
 		count        int
 		monthlyTotal float64
+		yearlyTotal  float64
 	}
 	byCategory := make(map[uuid.UUID]*agg)
 	for _, cat := range cats {
 		byCategory[cat.ID] = &agg{}
 	}
 
-	var totalMonthly float64
+	var totalMonthly, totalYearly float64
 	for _, con := range contracts {
 		a, ok := byCategory[con.CategoryID]
 		if !ok {
@@ -51,10 +54,10 @@ func (h *Handler) Summary(w http.ResponseWriter, r *http.Request) {
 			byCategory[con.CategoryID] = a
 		}
 		a.count++
-		if con.PricePerMonth != nil {
-			a.monthlyTotal += *con.PricePerMonth
-			totalMonthly += *con.PricePerMonth
-		}
+		a.monthlyTotal += con.MonthlyPrice()
+		a.yearlyTotal += con.YearlyPrice()
+		totalMonthly += con.MonthlyPrice()
+		totalYearly += con.YearlyPrice()
 	}
 
 	catSummaries := make([]categorySummary, 0, len(cats))
@@ -65,12 +68,14 @@ func (h *Handler) Summary(w http.ResponseWriter, r *http.Request) {
 			Name:          cat.Name,
 			ContractCount: a.count,
 			MonthlyTotal:  a.monthlyTotal,
+			YearlyTotal:   a.yearlyTotal,
 		})
 	}
 
 	h.writeJSON(w, http.StatusOK, summaryResponse{
-		TotalContracts:    len(contracts),
+		TotalContracts:     len(contracts),
 		TotalMonthlyAmount: totalMonthly,
-		Categories:        catSummaries,
+		TotalYearlyAmount:  totalYearly,
+		Categories:         catSummaries,
 	})
 }

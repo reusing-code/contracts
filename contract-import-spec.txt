@@ -47,8 +47,17 @@ Fields
   customerNumber (string, optional)
     Your customer number with the provider.
 
-  pricePerMonth (number, optional)
-    Monthly cost in the user's currency. Use null or omit if unknown.
+  pricePerMonth (number, optional) — DEPRECATED, use "price" instead.
+    Treated as a monthly price. Kept for backward compatibility.
+
+  price (number, optional)
+    Cost of the contract in the user's currency. Use null or omit if unknown.
+    Interpretation depends on billingInterval.
+
+  billingInterval (string, optional, default "monthly")
+    How often the price is billed. Must be one of:
+      - "monthly" — price is a monthly cost
+      - "yearly"  — price is a yearly cost
 
   endDate (string, optional)
     Contract end/cancellation date in YYYY-MM-DD format.
@@ -95,7 +104,8 @@ Example
     "minimumDurationMonths": 24,
     "extensionDurationMonths": 12,
     "noticePeriodMonths": 3,
-    "pricePerMonth": 45.99,
+    "price": 549.99,
+    "billingInterval": "yearly",
     "customerPortalUrl": "https://portal.allianz.com",
     "comments": "Covers water damage and theft"
   },
@@ -107,6 +117,7 @@ Example
     "minimumDurationMonths": 24,
     "extensionDurationMonths": 12,
     "noticePeriodMonths": 3,
-    "pricePerMonth": 39.99
+    "price": 39.99,
+    "billingInterval": "monthly"
   }
 ]

@@ -25,6 +25,7 @@ interface ContractDialogProps {
 const defaultValues: ContractFormData = {
   name: "",
   startDate: new Date().toISOString().slice(0, 10),
+  billingInterval: "monthly",
   minimumDurationMonths: 12,
   extensionDurationMonths: 12,
   noticePeriodMonths: 3,
@@ -46,7 +47,8 @@ export function ContractDialog({ open, onOpenChange, contract, onSubmit }: Contr
           company: contract.company,
           contractNumber: contract.contractNumber,
           customerNumber: contract.customerNumber,
-          pricePerMonth: contract.pricePerMonth,
+          price: contract.price,
+          billingInterval: contract.billingInterval,
           startDate: contract.startDate,
           endDate: contract.endDate,
           minimumDurationMonths: contract.minimumDurationMonths,

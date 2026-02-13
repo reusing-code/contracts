@@ -42,7 +42,10 @@ interface ContractsTableProps {
 function formatCellValue(contract: Contract, key: string, currency: string, t: (key: string) => string): string {
   const value = contract[key as keyof Contract]
   if (value === undefined || value === null || value === "") return "-"
-  if (key === "pricePerMonth") return `${Number(value).toFixed(2)} ${currency}`
+  if (key === "price") {
+    const interval = contract.billingInterval === "yearly" ? t("common.perYear") : t("common.perMonth")
+    return `${Number(value).toFixed(2)} ${currency} ${interval}`
+  }
   if (key === "startDate" || key === "endDate") return format(new Date(value as string), "yyyy-MM-dd")
   if (key === "minimumDurationMonths" || key === "extensionDurationMonths" || key === "noticePeriodMonths") {
     return `${value} ${t("common.months")}`

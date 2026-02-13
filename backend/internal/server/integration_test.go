@@ -134,7 +134,7 @@ func TestIntegration_FullCRUDFlow(t *testing.T) {
 	// Create contract in category
 	conBody := map[string]any{
 		"name":                    "Phone Plan",
-		"startDate":              "2025-01-01",
+		"startDate":               "2025-01-01",
 		"minimumDurationMonths":   24,
 		"extensionDurationMonths": 12,
 		"noticePeriodMonths":      3,
@@ -256,9 +256,10 @@ func TestIntegration_Summary(t *testing.T) {
 
 	price := 49.99
 	conBody := map[string]any{
-		"name":          "Health",
-		"startDate":     "2025-01-01",
-		"pricePerMonth": price,
+		"name":            "Health",
+		"startDate":       "2025-01-01",
+		"price":           price,
+		"billingInterval": "monthly",
 	}
 	resp = doJSON(t, "POST", base+"/api/v1/categories/"+cat.ID.String()+"/contracts", conBody)
 	expectStatus(t, resp, 201)
@@ -300,7 +301,7 @@ func TestIntegration_UpcomingRenewals(t *testing.T) {
 
 	conBody := map[string]any{
 		"name":                    "Phone",
-		"startDate":              "2025-01-01",
+		"startDate":               "2025-01-01",
 		"minimumDurationMonths":   12,
 		"extensionDurationMonths": 12,
 		"noticePeriodMonths":      3,
@@ -337,7 +338,7 @@ func TestIntegration_ContractResponse_HasComputedFields(t *testing.T) {
 
 	conBody := map[string]any{
 		"name":                    "Test Contract",
-		"startDate":              "2025-01-01",
+		"startDate":               "2025-01-01",
 		"minimumDurationMonths":   24,
 		"extensionDurationMonths": 12,
 		"noticePeriodMonths":      3,

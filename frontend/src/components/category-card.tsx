@@ -15,11 +15,12 @@ interface CategoryCardProps {
   category: Category
   contractCount: number
   monthlyTotal: number
+  yearlyTotal: number
   onEdit: () => void
   onDelete: () => void
 }
 
-export function CategoryCard({ category, contractCount, monthlyTotal, onEdit, onDelete }: CategoryCardProps) {
+export function CategoryCard({ category, contractCount, monthlyTotal, yearlyTotal, onEdit, onDelete }: CategoryCardProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
@@ -54,6 +55,13 @@ export function CategoryCard({ category, contractCount, monthlyTotal, onEdit, on
           <p className="text-sm font-medium mt-1">
             {t("dashboard.monthlyTotal", {
               amount: `${monthlyTotal.toFixed(2)} ${t("common.currency")}`,
+            })}
+          </p>
+        )}
+        {yearlyTotal > 0 && (
+          <p className="text-sm font-medium mt-1">
+            {t("dashboard.yearlyTotal", {
+              amount: `${yearlyTotal.toFixed(2)} ${t("common.currency")}`,
             })}
           </p>
         )}

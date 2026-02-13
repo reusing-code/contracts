@@ -17,7 +17,8 @@
     "noCategories": "No categories yet. Create one to get started.",
     "contractCount_one": "{{count}} contract",
     "contractCount_other": "{{count}} contracts",
-    "monthlyTotal": "{{amount}} / month"
+    "monthlyTotal": "{{amount}} / month",
+    "yearlyTotal": "{{amount}} / year"
   },
   "category": {
     "create": "Create Category",
@@ -52,6 +53,10 @@
     "contractNumber": "Contract No.",
     "customerNumber": "Customer No.",
     "pricePerMonth": "Price / Month",
+    "price": "Price",
+    "billingInterval": "Billing Interval",
+    "billingMonthly": "Monthly",
+    "billingYearly": "Yearly",
     "startDate": "Start Date",
     "endDate": "End Date (Cancelled)",
     "minimumDuration": "Min. Duration (Months)",
@@ -127,6 +132,8 @@
     "actions": "Actions",
     "confirm": "Are you sure?",
     "currency": "€",
-    "months": "months"
+    "months": "months",
+    "perMonth": "/ mo",
+    "perYear": "/ yr"
   }
 }

@@ -1,5 +1,8 @@
 import { z } from "zod/v4"
 
+export const billingIntervalSchema = z.enum(["monthly", "yearly"])
+export type BillingInterval = z.infer<typeof billingIntervalSchema>
+
 export const contractSchema = z.object({
   id: z.string().uuid(),
   categoryId: z.string().uuid(),
@@ -8,7 +11,8 @@ export const contractSchema = z.object({
   company: z.string().optional(),
   contractNumber: z.string().optional(),
   customerNumber: z.string().optional(),
-  pricePerMonth: z.number().nonnegative().optional(),
+  price: z.number().nonnegative().optional(),
+  billingInterval: billingIntervalSchema,
   startDate: z.string().date(),
   endDate: z.string().date().optional(),
   minimumDurationMonths: z.number().int().nonnegative(),
@@ -31,7 +35,8 @@ export const contractFormSchema = z.object({
   company: z.string().optional(),
   contractNumber: z.string().optional(),
   customerNumber: z.string().optional(),
-  pricePerMonth: z.number().nonnegative().optional(),
+  price: z.number().nonnegative().optional(),
+  billingInterval: billingIntervalSchema,
   startDate: z.string().date(),
   endDate: z.string().date().optional(),
   minimumDurationMonths: z.number().int().nonnegative(),
