@@ -11,6 +11,7 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"github.com/google/uuid"
 	"github.com/tobi/contracts/backend/internal/model"
+	"github.com/tobi/contracts/backend/internal/store/migration"
 )
 
 var (
@@ -40,6 +41,11 @@ func NewBadgerStore(path string, logger *slog.Logger) (*BadgerStore, error) {
 	db, err := badger.Open(opts)
 	if err != nil {
 		return nil, fmt.Errorf("opening badger db: %w", err)
+	}
+
+	if err := migration.RunAll(db, logger, migration.All); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("running migrations: %w", err)
 	}
 
 	s := &BadgerStore{
