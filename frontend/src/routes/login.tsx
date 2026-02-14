@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { createRoute, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
+import { usePageTitle } from "@/hooks/use-page-title"
 import { Eye, EyeOff } from "lucide-react"
 import { rootRoute } from "./__root"
 import { useAuth } from "@/hooks/use-auth"
@@ -60,6 +61,7 @@ function LoginPage() {
   const navigate = useNavigate()
 
   const [isRegister, setIsRegister] = useState(false)
+  usePageTitle(isRegister ? t("auth.register") : t("auth.login"), t("app.title"))
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")

@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { createRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
+import { usePageTitle } from "@/hooks/use-page-title"
 import { toast } from "sonner"
 import { Plus, Upload } from "lucide-react"
 import { rootRoute } from "./__root"
@@ -22,6 +23,7 @@ export const indexRoute = createRoute({
 
 function DashboardPage() {
   const { t } = useTranslation()
+  usePageTitle(t("nav.dashboard"), t("app.title"))
   const { data: categories = [] } = useCategories()
   const { data: summary } = useQuery({
     queryKey: ["summary"],

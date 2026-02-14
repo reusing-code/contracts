@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { createRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
+import { usePageTitle } from "@/hooks/use-page-title"
 import { toast } from "sonner"
 import { rootRoute } from "./__root"
 import { useUpcomingRenewals } from "@/hooks/use-contracts"
@@ -21,6 +22,7 @@ export const upcomingRenewalsRoute = createRoute({
 
 function UpcomingRenewalsPage() {
   const { t } = useTranslation()
+  usePageTitle(t("nav.upcomingRenewals"), t("app.title"))
   const { data: settings } = useSettings()
   const { data: contracts = [] } = useUpcomingRenewals(settings?.renewalDays)
   const qc = useQueryClient()
