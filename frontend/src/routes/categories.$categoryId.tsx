@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { createRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
+import { usePageTitle } from "@/hooks/use-page-title"
 import { toast } from "sonner"
 import { Plus } from "lucide-react"
 import { rootRoute } from "./__root"
@@ -26,6 +27,8 @@ function CategoryDetailPage() {
     queryKey: ["category", categoryId],
     queryFn: () => getCategoryById(categoryId),
   })
+  const categoryName = category ? (category.nameKey ? t(category.nameKey) : category.name) : t("nav.categories")
+  usePageTitle(categoryName, t("app.title"))
   const { data: contracts = [] } = useCategoryContracts(categoryId)
   const createContract = useCreateContract(categoryId)
   const updateContract = useUpdateContract(categoryId)

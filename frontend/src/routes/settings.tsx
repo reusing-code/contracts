@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { createRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
+import { usePageTitle } from "@/hooks/use-page-title"
 import { toast } from "sonner"
 import { rootRoute } from "./__root"
 import { useSettings, useUpdateSettings, useChangePassword } from "@/hooks/use-settings"
@@ -18,6 +19,7 @@ export const settingsRoute = createRoute({
 
 function SettingsPage() {
   const { t } = useTranslation()
+  usePageTitle(t("nav.settings"), t("app.title"))
   const { data: settings } = useSettings()
   const updateSettings = useUpdateSettings()
   const changePassword = useChangePassword()
