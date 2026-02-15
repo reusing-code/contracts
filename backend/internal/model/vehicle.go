@@ -48,6 +48,12 @@ func (v *VehicleInput) Validate() error {
 	if v.Name == "" {
 		return errors.New("name is required")
 	}
+
+	if v.PurchaseDate != "" {
+		if _, err := time.Parse("2006-01-02", v.PurchaseDate); err != nil {
+			return errors.New("purchaseDate must be in format YYYY-MM-DD")
+		}
+	}
 	return nil
 }
 
