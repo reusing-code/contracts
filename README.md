@@ -57,7 +57,7 @@ Dockerfile         Multi-stage build (Bun → Go → Alpine)
 docker-compose.yml Single-service deployment with named volume
 ```
 
-See `frontend/CLAUDE.md` and `backend/CLAUDE.md` for per-project details.
+See `frontend/AGENTS.md` and `backend/AGENTS.md` for per-project details.
 
 ## API
 

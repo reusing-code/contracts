@@ -16,7 +16,7 @@ This file provides guidance to AI coding agents when working with code in this r
 - `task build` — Build Docker image
 - `task up` / `task down` — Docker Compose up/down
 
-See `frontend/CLAUDE.md` and `backend/CLAUDE.md` for per-project commands.
+See `frontend/AGENTS.md` and `backend/AGENTS.md` for per-project commands.
 
 ## Project structure
 
