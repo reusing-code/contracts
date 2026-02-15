@@ -157,7 +157,7 @@ func CalculateVehicleSummary(vehicle Vehicle, entries []CostEntry, now time.Time
 	}
 	summary.TotalCost = purchaseTotal + totalNonPurchaseCost
 	summary.CostPerMonth = summary.TotalCost / monthsOwned
-	if currentMileage > 0 {
+	if kmDriven > 0 {
 		summary.CostPerKm = summary.TotalCost / kmDriven
 	}
 
@@ -399,9 +399,6 @@ func calcProjection(vehicle Vehicle, summary VehicleSummary, monthsOwned, kmDriv
 		return proj
 	}
 
-	// Project running costs: scale current running costs to target duration
-	ratio := targetMonths / monthsOwned
-
 	// Apply maintenance cost factor if set (multiplier for projecting service costs into the future)
 	maintenanceFactor := 1.0
 	if vehicle.MaintenanceFactor != nil {
@@ -412,15 +409,10 @@ func calcProjection(vehicle Vehicle, summary VehicleSummary, monthsOwned, kmDriv
 	serviceCost := summary.CostsByType[CostTypeService] + summary.CostsByType[CostTypeInspection] + summary.CostsByType[CostTypeTires]
 	nonServiceCost := totalRunningCost - serviceCost
 
-	projectedRunningCost := (serviceCost*maintenanceFactor + nonServiceCost) * ratio / (monthsOwned / monthsOwned)
-	// Simplified: project each cost category linearly, apply factor to maintenance-related
-	projectedServiceCost := serviceCost * ratio * maintenanceFactor / monthsOwned * monthsOwned / (monthsOwned)
-	_ = projectedServiceCost
-
-	// Cleaner approach: linear projection with maintenance factor on service costs
+	// Linear projection with maintenance factor on service costs
 	projectedNonService := nonServiceCost * (targetMonths / monthsOwned)
 	projectedService := serviceCost * (targetMonths / monthsOwned) * maintenanceFactor
-	projectedRunningCost = projectedNonService + projectedService
+	projectedRunningCost := projectedNonService + projectedService
 
 	proj.ProjectedTotalCost = purchaseTotal + projectedRunningCost
 
@@ -445,14 +437,12 @@ func calcProjection(vehicle Vehicle, summary VehicleSummary, monthsOwned, kmDriv
 		proj.TheoreticalResidual = math.Round(residual*100) / 100
 	}
 
-	// Required sale price: what you'd need to sell for to achieve projected cost/month
-	// requiredSalePrice = projectedTotalCost - (projectedCostPerMonth * targetMonths)
-	// In other words: the sale proceeds that would offset the total cost
-	// actualCostPerMonth = (totalCost - salePrice) / targetMonths = projectedCostPerMonth
-	// salePrice = totalCost - projectedCostPerMonth * targetMonths
-	// This simplifies to 0 when no sale adjustment... Let's use the spreadsheet approach:
-	// The user wants: what sale price makes the per-month cost stay at the projected level
-	proj.RequiredSalePrice = math.Max(0, proj.ProjectedTotalCost-proj.ProjectedCostPerMonth*targetMonths)
+	// Required sale price: what you'd need to sell for to keep the cost/month
+	// at the current historical average.
+	// actualCostPerMonth = (projectedTotalCost - salePrice) / targetMonths
+	// Setting actualCostPerMonth = summary.CostPerMonth and solving for salePrice:
+	// salePrice = projectedTotalCost - summary.CostPerMonth * targetMonths
+	proj.RequiredSalePrice = math.Max(0, proj.ProjectedTotalCost-summary.CostPerMonth*targetMonths)
 
 	return proj
 }
