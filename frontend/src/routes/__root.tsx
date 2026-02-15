@@ -64,7 +64,10 @@ function VersionIndicator() {
 
   useEffect(() => {
     fetch("/api/version")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to fetch version")
+        return r.json()
+      })
       .then((data: { version: string; commit?: string; buildDate?: string }) => {
         const parts = [data.version]
         if (data.buildDate) parts.push(data.buildDate)

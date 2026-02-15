@@ -2,6 +2,7 @@ package version
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 )
 
@@ -27,5 +28,7 @@ func Get() Info {
 
 func Handler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(Get())
+	if err := json.NewEncoder(w).Encode(Get()); err != nil {
+		slog.Default().Error("encoding version response", "error", err)
+	}
 }
