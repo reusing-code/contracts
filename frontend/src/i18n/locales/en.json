@@ -180,6 +180,7 @@
     "currency": "€",
     "months": "months",
     "perMonth": "/ mo",
-    "perYear": "/ yr"
+    "perYear": "/ yr",
+    "viewAll": "View all"
   }
 }

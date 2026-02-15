@@ -1,19 +1,25 @@
 import { useState } from "react"
-import { createRoute } from "@tanstack/react-router"
+import { createRoute, Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { usePageTitle } from "@/hooks/use-page-title"
 import { toast } from "sonner"
 import { Plus, Upload } from "lucide-react"
 import { rootRoute } from "./__root"
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/use-categories"
-import { getSummary } from "@/lib/contract-repository"
-import { useQuery } from "@tanstack/react-query"
+import { useUpcomingRenewals } from "@/hooks/use-contracts"
+import { useSettings } from "@/hooks/use-settings"
+import { getSummary, updateContract, deleteContract } from "@/lib/contract-repository"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import type { Category, CategoryFormData } from "@/types/category"
+import type { Contract, ContractFormData } from "@/types/contract"
 import { Button } from "@/components/ui/button"
 import { CategoryCard } from "@/components/category-card"
 import { CategoryDialog } from "@/components/category-dialog"
+import { ContractsTable } from "@/components/contracts-table"
+import { ContractDialog } from "@/components/contract-dialog"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { ImportDialog } from "@/components/import-dialog"
+import { getRenewalRowClass } from "@/lib/utils"
 
 export const contractsIndexRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -36,10 +42,38 @@ function ContractsDashboardPage() {
   const updateCategory = useUpdateCategory("contracts")
   const deleteCategory = useDeleteCategory("contracts")
 
+  const { data: settings } = useSettings()
+  const { data: upcomingContracts = [] } = useUpcomingRenewals(settings?.renewalDays)
+  const qc = useQueryClient()
+
   const [dialogOpen, setDialogOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null)
+  const [editingContract, setEditingContract] = useState<Contract | null>(null)
+  const [deletingContract, setDeletingContract] = useState<Contract | null>(null)
+
+  const updateContractMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: ContractFormData }) => updateContract(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["contracts"] })
+      qc.invalidateQueries({ queryKey: ["categories", "contracts"] })
+      qc.invalidateQueries({ queryKey: ["summary"] })
+      toast.success(t("contract.updated"))
+      setEditingContract(null)
+    },
+  })
+
+  const deleteContractMutation = useMutation({
+    mutationFn: ({ id }: { id: string }) => deleteContract(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["contracts"] })
+      qc.invalidateQueries({ queryKey: ["categories", "contracts"] })
+      qc.invalidateQueries({ queryKey: ["summary"] })
+      toast.success(t("contract.deleted"))
+      setDeletingContract(null)
+    },
+  })
 
   function handleCreate(data: CategoryFormData) {
     createCategory.mutate(data, { onSuccess: () => toast.success(t("category.created")) })
@@ -60,6 +94,16 @@ function ContractsDashboardPage() {
       onSuccess: () => toast.success(t("category.deleted")),
     })
     setDeletingCategory(null)
+  }
+
+  function handleContractUpdate(data: ContractFormData) {
+    if (!editingContract) return
+    updateContractMutation.mutate({ id: editingContract.id, data })
+  }
+
+  function handleContractDelete() {
+    if (!deletingContract) return
+    deleteContractMutation.mutate({ id: deletingContract.id })
   }
 
   return (
@@ -106,6 +150,26 @@ function ContractsDashboardPage() {
         </div>
       )}
 
+      {upcomingContracts.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">{t("nav.upcomingRenewals")}</h2>
+            <Link
+              to="/contracts/upcoming-renewals"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("common.viewAll")}
+            </Link>
+          </div>
+          <ContractsTable
+            contracts={upcomingContracts.slice(0, 5)}
+            onEdit={(c) => setEditingContract(c)}
+            onDelete={(c) => setDeletingContract(c)}
+            getRowClassName={getRenewalRowClass}
+          />
+        </div>
+      )}
+
       <CategoryDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
@@ -126,6 +190,20 @@ function ContractsDashboardPage() {
         onOpenChange={(open) => { if (!open) setDeletingCategory(null) }}
         description={t("category.deleteConfirm", { name: deletingCategory?.nameKey ? t(deletingCategory.nameKey) : deletingCategory?.name ?? "" })}
         onConfirm={handleDelete}
+      />
+
+      <ContractDialog
+        open={!!editingContract}
+        onOpenChange={(open) => { if (!open) setEditingContract(null) }}
+        contract={editingContract}
+        onSubmit={handleContractUpdate}
+      />
+
+      <DeleteConfirmDialog
+        open={!!deletingContract}
+        onOpenChange={(open) => { if (!open) setDeletingContract(null) }}
+        description={t("contract.deleteConfirm", { name: deletingContract?.name ?? "" })}
+        onConfirm={handleContractDelete}
       />
     </div>
   )
