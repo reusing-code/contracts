@@ -26,9 +26,11 @@ func Get() Info {
 	}
 }
 
-func Handler(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(Get()); err != nil {
-		slog.Error("encoding version response", "error", err)
+func Handler(logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(Get()); err != nil {
+			logger.Error("encoding version response", "error", err)
+		}
 	}
 }

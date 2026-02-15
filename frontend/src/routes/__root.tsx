@@ -63,7 +63,8 @@ function VersionIndicator() {
   const [label, setLabel] = useState("")
 
   useEffect(() => {
-    fetch("/api/version")
+    const controller = new AbortController()
+    fetch("/api/version", { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error(r.statusText)
         return r.json()
@@ -75,6 +76,7 @@ function VersionIndicator() {
         setLabel(parts.join(" / "))
       })
       .catch(() => {})
+    return () => controller.abort()
   }, [])
 
   if (!label) return null

@@ -2,6 +2,7 @@ package version
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -19,7 +20,7 @@ func TestHandler(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/api/version", nil)
-	Handler(rec, req)
+	Handler(slog.Default())(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)
@@ -46,7 +47,7 @@ func TestHandler(t *testing.T) {
 func TestHandlerDefaults(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/api/version", nil)
-	Handler(rec, req)
+	Handler(slog.Default())(rec, req)
 
 	var info Info
 	if err := json.NewDecoder(rec.Body).Decode(&info); err != nil {
