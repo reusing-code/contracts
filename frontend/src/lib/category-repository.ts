@@ -5,7 +5,7 @@ export async function getAllCategories(module: string): Promise<Category[]> {
   return get<Category[]>(`/modules/${module}/categories`)
 }
 
-export async function getCategoryById(module: string, id: string): Promise<Category | undefined> {
+export async function getCategoryById(module: string, id: string): Promise<Category> {
   return get<Category>(`/modules/${module}/categories/${id}`)
 }
 

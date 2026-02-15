@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { Fragment, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { format } from "date-fns"
 import { ChevronRight, ExternalLink, FileText, BookOpen, MoreVertical } from "lucide-react"
@@ -19,10 +19,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Collapsible,
-  CollapsibleContent,
-} from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
 
 const tableColumns = purchaseFields
@@ -57,8 +53,7 @@ function PurchaseDetailRow({ purchase, colSpan }: PurchaseDetailRowProps) {
   return (
     <TableRow className="bg-muted/30 hover:bg-muted/30">
       <TableCell colSpan={colSpan} className="p-0">
-        <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapse data-[state=open]:animate-expand">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
             {detailFields.map((field) => {
               const value = formatCellValue(purchase, field.key, currency)
               if (value === "-" && field.type === "textarea") return null
@@ -83,7 +78,6 @@ function PurchaseDetailRow({ purchase, colSpan }: PurchaseDetailRowProps) {
               )
             })}
           </div>
-        </CollapsibleContent>
       </TableCell>
     </TableRow>
   )
@@ -124,8 +118,7 @@ export function PurchasesTable({ purchases, onEdit, onDelete }: PurchasesTablePr
             purchases.map((purchase) => {
               const isExpanded = expandedId === purchase.id
               return (
-                <Collapsible key={purchase.id} open={isExpanded} asChild>
-                  <>
+                <Fragment key={purchase.id}>
                     <TableRow
                       className="cursor-pointer select-none"
                       onClick={() => toggleExpand(purchase.id)}
@@ -191,9 +184,8 @@ export function PurchasesTable({ purchases, onEdit, onDelete }: PurchasesTablePr
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                    <PurchaseDetailRow purchase={purchase} colSpan={totalColumns} />
-                  </>
-                </Collapsible>
+                    {isExpanded && <PurchaseDetailRow purchase={purchase} colSpan={totalColumns} />}
+                </Fragment>
               )
             })
           )}

@@ -9,7 +9,7 @@ export async function getPurchasesByCategory(categoryId: string): Promise<Purcha
   return get<Purchase[]>(`/categories/${categoryId}/purchases`)
 }
 
-export async function getPurchaseById(id: string): Promise<Purchase | undefined> {
+export async function getPurchaseById(id: string): Promise<Purchase> {
   return get<Purchase>(`/purchases/${id}`)
 }
 

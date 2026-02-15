@@ -15,7 +15,7 @@ export async function getContractsByCategory(categoryId: string): Promise<Contra
   return get<Contract[]>(`/categories/${categoryId}/contracts`)
 }
 
-export async function getContractById(id: string): Promise<Contract | undefined> {
+export async function getContractById(id: string): Promise<Contract> {
   return get<Contract>(`/contracts/${id}`)
 }
 

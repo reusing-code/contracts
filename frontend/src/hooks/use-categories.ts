@@ -36,6 +36,13 @@ export function useDeleteCategory(module: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => deleteCategory(module, id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: categoriesKey(module) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: categoriesKey(module) })
+      if (module === "contracts") {
+        qc.invalidateQueries({ queryKey: ["summary"] })
+      } else if (module === "purchases") {
+        qc.invalidateQueries({ queryKey: ["purchases-summary"] })
+      }
+    },
   })
 }

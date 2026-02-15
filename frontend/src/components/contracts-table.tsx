@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { Fragment, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { format } from "date-fns"
 import { ChevronRight, ExternalLink, FileText, MoreVertical } from "lucide-react"
@@ -20,10 +20,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Collapsible,
-  CollapsibleContent,
-} from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
 
 const tableColumns = contractFields
@@ -65,8 +61,7 @@ function ContractDetailRow({ contract, colSpan }: ContractDetailRowProps) {
   return (
     <TableRow className="bg-muted/30 hover:bg-muted/30">
       <TableCell colSpan={colSpan} className="p-0">
-        <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapse data-[state=open]:animate-expand">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
             {detailFields.map((field) => {
               const value = formatCellValue(contract, field.key, currency, t)
               if (value === "-" && field.type === "textarea") return null
@@ -91,7 +86,6 @@ function ContractDetailRow({ contract, colSpan }: ContractDetailRowProps) {
               )
             })}
           </div>
-        </CollapsibleContent>
       </TableCell>
     </TableRow>
   )
@@ -134,8 +128,7 @@ export function ContractsTable({ contracts, onEdit, onDelete, getRowClassName }:
               const rowClass = getRowClassName?.(contract)
               const isExpanded = expandedId === contract.id
               return (
-                <Collapsible key={contract.id} open={isExpanded} asChild>
-                  <>
+                <Fragment key={contract.id}>
                     <TableRow
                       className={cn(
                         contract.expired ? "opacity-50" : undefined,
@@ -207,9 +200,8 @@ export function ContractsTable({ contracts, onEdit, onDelete, getRowClassName }:
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                    <ContractDetailRow contract={contract} colSpan={totalColumns} />
-                  </>
-                </Collapsible>
+                    {isExpanded && <ContractDetailRow contract={contract} colSpan={totalColumns} />}
+                </Fragment>
               )
             })
           )}
