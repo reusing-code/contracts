@@ -8,11 +8,11 @@ import { useUpcomingRenewals } from "@/hooks/use-contracts"
 import { useSettings } from "@/hooks/use-settings"
 import { updateContract, deleteContract } from "@/lib/contract-repository"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { differenceInDays } from "date-fns"
 import type { Contract, ContractFormData } from "@/types/contract"
 import { ContractsTable } from "@/components/contracts-table"
 import { ContractDialog } from "@/components/contract-dialog"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { getRenewalRowClass } from "@/lib/utils"
 
 export const contractsUpcomingRenewalsRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -60,14 +60,6 @@ function UpcomingRenewalsPage() {
     deleteMutation.mutate({ id: deletingContract.id })
   }
 
-  function getRowClass(c: Contract) {
-    if (!c.cancellationDate) return undefined
-    const days = differenceInDays(new Date(c.cancellationDate), new Date())
-    if (days <= 30) return "bg-destructive/10 hover:bg-destructive/20"
-    if (days <= 90) return "bg-yellow-500/10 hover:bg-yellow-500/20"
-    return "text-muted-foreground opacity-75"
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -78,7 +70,7 @@ function UpcomingRenewalsPage() {
         contracts={contracts}
         onEdit={(c) => setEditingContract(c)}
         onDelete={(c) => setDeletingContract(c)}
-        getRowClassName={getRowClass}
+        getRowClassName={getRenewalRowClass}
       />
 
       <ContractDialog

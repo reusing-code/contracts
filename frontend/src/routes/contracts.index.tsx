@@ -10,7 +10,6 @@ import { useUpcomingRenewals } from "@/hooks/use-contracts"
 import { useSettings } from "@/hooks/use-settings"
 import { getSummary, updateContract, deleteContract } from "@/lib/contract-repository"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { differenceInDays } from "date-fns"
 import type { Category, CategoryFormData } from "@/types/category"
 import type { Contract, ContractFormData } from "@/types/contract"
 import { Button } from "@/components/ui/button"
@@ -20,6 +19,7 @@ import { ContractsTable } from "@/components/contracts-table"
 import { ContractDialog } from "@/components/contract-dialog"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { ImportDialog } from "@/components/import-dialog"
+import { getRenewalRowClass } from "@/lib/utils"
 
 export const contractsIndexRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -58,6 +58,7 @@ function ContractsDashboardPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["contracts"] })
       qc.invalidateQueries({ queryKey: ["categories", "contracts"] })
+      qc.invalidateQueries({ queryKey: ["summary"] })
       toast.success(t("contract.updated"))
       setEditingContract(null)
     },
@@ -68,6 +69,7 @@ function ContractsDashboardPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["contracts"] })
       qc.invalidateQueries({ queryKey: ["categories", "contracts"] })
+      qc.invalidateQueries({ queryKey: ["summary"] })
       toast.success(t("contract.deleted"))
       setDeletingContract(null)
     },
@@ -102,14 +104,6 @@ function ContractsDashboardPage() {
   function handleContractDelete() {
     if (!deletingContract) return
     deleteContractMutation.mutate({ id: deletingContract.id })
-  }
-
-  function getRenewalRowClass(c: Contract) {
-    if (!c.cancellationDate) return undefined
-    const days = differenceInDays(new Date(c.cancellationDate), new Date())
-    if (days <= 30) return "bg-destructive/10 hover:bg-destructive/20"
-    if (days <= 90) return "bg-yellow-500/10 hover:bg-yellow-500/20"
-    return "text-muted-foreground opacity-75"
   }
 
   return (

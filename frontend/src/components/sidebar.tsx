@@ -24,7 +24,10 @@ function SidebarSection({
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <div className="flex items-center">
-        <CollapsibleTrigger className="flex items-center px-2 py-1.5 text-muted-foreground hover:text-foreground transition-colors">
+        <CollapsibleTrigger
+          className="flex items-center px-2 py-1.5 text-muted-foreground hover:text-foreground transition-colors"
+          aria-label={`Toggle ${title} section`}
+        >
           <ChevronRight className={cn("h-3 w-3 transition-transform", open && "rotate-90")} />
         </CollapsibleTrigger>
         {to ? (
