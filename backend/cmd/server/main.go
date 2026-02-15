@@ -24,6 +24,7 @@ func main() {
 		handler = slog.NewTextHandler(os.Stdout, opts)
 	}
 	logger := slog.New(handler)
+	slog.SetDefault(logger)
 
 	db, err := store.NewBadgerStore(cfg.DBPath, logger)
 	if err != nil {

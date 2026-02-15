@@ -78,7 +78,7 @@ func (s *Server) Run() error {
 	mux.Handle("GET /metrics", promhttp.Handler())
 	mux.HandleFunc("POST /api/v1/auth/register", h.Register)
 	mux.HandleFunc("POST /api/v1/auth/login", h.Login)
-	mux.HandleFunc("GET /api/version", version.Handler(s.logger))
+	mux.HandleFunc("GET /api/version", version.Handler)
 
 	// Mount protected API routes
 	mux.Handle("/api/v1/", protectedAPI)
