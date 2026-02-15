@@ -2,6 +2,16 @@ version: "3"
 
 vars:
   BINARY: server
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo "dev"
+  COMMIT:
+    sh: git rev-parse --short HEAD 2>/dev/null || echo ""
+  BUILD_DATE:
+    sh: date -u +%Y-%m-%d
+  LDFLAGS: >-
+    -X github.com/tobi/contracts/backend/internal/version.Version={{.VERSION}}
+    -X github.com/tobi/contracts/backend/internal/version.Commit={{.COMMIT}}
+    -X github.com/tobi/contracts/backend/internal/version.BuildDate={{.BUILD_DATE}}
 
 tasks:
   dev:
@@ -15,7 +25,7 @@ tasks:
   build:
     desc: Build the binary
     cmds:
-      - go build -o {{.BINARY}} ./cmd/server
+      - go build -ldflags '{{.LDFLAGS}}' -o {{.BINARY}} ./cmd/server
 
   test:
     desc: Run tests

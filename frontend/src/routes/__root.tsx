@@ -5,7 +5,7 @@ import { Sidebar } from "@/components/sidebar"
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { LogOut } from "lucide-react"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 
 export const rootRoute = createRootRoute({
@@ -54,6 +54,35 @@ function RootLayout() {
           <Outlet />
         </main>
       </div>
+      <VersionIndicator />
+    </div>
+  )
+}
+
+function VersionIndicator() {
+  const [label, setLabel] = useState("")
+
+  useEffect(() => {
+    fetch("/api/version")
+      .then((r) => r.json())
+      .then((data: { version: string; commit?: string; buildDate?: string }) => {
+        const parts = [data.version]
+        if (data.buildDate) parts.push(data.buildDate)
+        if (data.commit) parts.push(data.commit)
+        setLabel(parts.join(" / "))
+      })
+      .catch(() => {})
+  }, [])
+
+  if (!label) return null
+
+  return (
+    <div className="py-1 text-center text-[11px] text-muted-foreground/60">
+      <a href="https://github.com/reusing-code/contracts" target="_blank" rel="noopener noreferrer" className="hover:text-muted-foreground">
+        Contracts
+      </a>
+      {" "}
+      {label}
     </div>
   )
 }
