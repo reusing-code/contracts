@@ -62,13 +62,18 @@ All endpoints under `/api/v1/`. JSON request/response with camelCase field names
 - `GET|POST /api/v1/modules/{module}/categories` — List/create categories (module: `contracts` or `purchases`)
 - `GET|PUT|DELETE /api/v1/modules/{module}/categories/{id}` — Get/update/delete category (delete cascades to module items)
 - `GET|POST /api/v1/categories/{id}/contracts` — List/create contracts in category
+- `GET /api/v1/contracts` — List all contracts
 - `GET|PUT|DELETE /api/v1/contracts/{id}` — Get/update/delete contract
 - `GET /api/v1/contracts/upcoming-renewals` — Upcoming renewals
 - `POST /api/v1/contracts/import` — Batch JSON import
 - `GET /api/v1/summary` — Contract dashboard stats
 - `GET|POST /api/v1/categories/{id}/purchases` — List/create purchases in category
+- `GET /api/v1/purchases` — List all purchases
 - `GET|PUT|DELETE /api/v1/purchases/{id}` — Get/update/delete purchase
 - `GET /api/v1/purchases/summary` — Purchase spending stats
+- `GET /api/v1/settings` — Get renewal preferences
+- `PUT /api/v1/settings` — Update renewal preferences
+- `PUT /api/v1/settings/password` — Change password
 - `GET /healthz` — Liveness probe
 - `GET /readyz` — Readiness probe (checks DB)
 - `GET /metrics` — Prometheus metrics
