@@ -19,6 +19,7 @@ import (
 	"github.com/tobi/contracts/backend/internal/middleware"
 	"github.com/tobi/contracts/backend/internal/reminder"
 	"github.com/tobi/contracts/backend/internal/store"
+	"github.com/tobi/contracts/backend/internal/version"
 )
 
 type Server struct {
@@ -77,6 +78,7 @@ func (s *Server) Run() error {
 	mux.Handle("GET /metrics", promhttp.Handler())
 	mux.HandleFunc("POST /api/v1/auth/register", h.Register)
 	mux.HandleFunc("POST /api/v1/auth/login", h.Login)
+	mux.HandleFunc("GET /api/version", version.Handler)
 
 	// Mount protected API routes
 	mux.Handle("/api/v1/", protectedAPI)
@@ -101,7 +103,8 @@ func (s *Server) Run() error {
 
 	errCh := make(chan error, 1)
 	go func() {
-		s.logger.Info("server starting", "port", s.cfg.Port, "environment", s.cfg.Environment)
+		v := version.Get()
+		s.logger.Info("server starting", "port", s.cfg.Port, "environment", s.cfg.Environment, "version", v.Version, "commit", v.Commit)
 		errCh <- srv.ListenAndServe()
 	}()
 
