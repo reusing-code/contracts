@@ -8,10 +8,14 @@ import { ChevronRight, Home } from "lucide-react"
 
 function SidebarSection({
   title,
+  to,
+  isActive,
   defaultOpen = true,
   children,
 }: {
   title: string
+  to?: string
+  isActive?: boolean
   defaultOpen?: boolean
   children: React.ReactNode
 }) {
@@ -19,10 +23,26 @@ function SidebarSection({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="flex w-full items-center gap-1 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
-        <ChevronRight className={cn("h-3 w-3 transition-transform", open && "rotate-90")} />
-        {title}
-      </CollapsibleTrigger>
+      <div className="flex items-center">
+        <CollapsibleTrigger className="flex items-center px-2 py-1.5 text-muted-foreground hover:text-foreground transition-colors">
+          <ChevronRight className={cn("h-3 w-3 transition-transform", open && "rotate-90")} />
+        </CollapsibleTrigger>
+        {to ? (
+          <Link
+            to={to}
+            className={cn(
+              "flex-1 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors hover:text-foreground",
+              isActive ? "text-foreground" : "text-muted-foreground",
+            )}
+          >
+            {title}
+          </Link>
+        ) : (
+          <CollapsibleTrigger className="flex-1 py-1.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
+            {title}
+          </CollapsibleTrigger>
+        )}
+      </div>
       <CollapsibleContent>
         <div className="flex flex-col gap-1">
           {children}
@@ -54,29 +74,13 @@ export function Sidebar() {
 
         <div className="my-2" />
 
-        <SidebarSection title={t("nav.contracts")}>
-          <Link
-            to="/contracts"
-            className={cn(
-              "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent",
-              matchRoute({ to: "/contracts" }) && "bg-accent",
-            )}
-          >
-            {t("nav.dashboard")}
-          </Link>
-
-          <Link
-            to="/contracts/upcoming-renewals"
-            className={cn(
-              "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent",
-              matchRoute({ to: "/contracts/upcoming-renewals" }) && "bg-accent",
-            )}
-          >
-            {t("nav.upcomingRenewals")}
-          </Link>
-
+        <SidebarSection
+          title={t("nav.contracts")}
+          to="/contracts"
+          isActive={!!matchRoute({ to: "/contracts", fuzzy: true })}
+        >
           {contractCategories.map((category) => {
-            const isActive = matchRoute({
+            const active = matchRoute({
               to: "/contracts/categories/$categoryId",
               params: { categoryId: category.id },
             })
@@ -86,8 +90,8 @@ export function Sidebar() {
                 to="/contracts/categories/$categoryId"
                 params={{ categoryId: category.id }}
                 className={cn(
-                  "rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent pl-6",
-                  isActive && "bg-accent font-medium",
+                  "rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent",
+                  active && "bg-accent font-medium",
                 )}
               >
                 {category.nameKey ? t(category.nameKey) : category.name}
@@ -96,19 +100,13 @@ export function Sidebar() {
           })}
         </SidebarSection>
 
-        <SidebarSection title={t("nav.purchases")}>
-          <Link
-            to="/purchases"
-            className={cn(
-              "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent",
-              matchRoute({ to: "/purchases" }) && "bg-accent",
-            )}
-          >
-            {t("nav.dashboard")}
-          </Link>
-
+        <SidebarSection
+          title={t("nav.purchases")}
+          to="/purchases"
+          isActive={!!matchRoute({ to: "/purchases", fuzzy: true })}
+        >
           {purchaseCategories.map((category) => {
-            const isActive = matchRoute({
+            const active = matchRoute({
               to: "/purchases/categories/$categoryId",
               params: { categoryId: category.id },
             })
@@ -118,8 +116,8 @@ export function Sidebar() {
                 to="/purchases/categories/$categoryId"
                 params={{ categoryId: category.id }}
                 className={cn(
-                  "rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent pl-6",
-                  isActive && "bg-accent font-medium",
+                  "rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent",
+                  active && "bg-accent font-medium",
                 )}
               >
                 {category.nameKey ? t(category.nameKey) : category.name}
