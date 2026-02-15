@@ -57,7 +57,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.seedDefaultCategories(r.Context(), user.ID.String())
+	h.seedDefaultCategoriesIfEmpty(r.Context(), user.ID.String(), "contracts", defaultContractCategories)
+	h.seedDefaultCategoriesIfEmpty(r.Context(), user.ID.String(), "purchases", defaultPurchaseCategories)
 
 	if h.emailClient != nil {
 		go h.sendWelcomeEmail(user.Email)
@@ -100,6 +101,9 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.seedDefaultCategoriesIfEmpty(r.Context(), user.ID.String(), "contracts", defaultContractCategories)
+	h.seedDefaultCategoriesIfEmpty(r.Context(), user.ID.String(), "purchases", defaultPurchaseCategories)
+
 	token, err := h.issueToken(user.ID.String())
 	if err != nil {
 		h.logger.Error("issuing token", "error", err)
@@ -110,7 +114,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, authResponse{Token: token, User: user})
 }
 
-var defaultCategories = []struct {
+var defaultContractCategories = []struct {
 	Name    string
 	NameKey string
 }{
@@ -119,9 +123,32 @@ var defaultCategories = []struct {
 	{"Telecommunications", "categoryNames.telecommunications"},
 }
 
-func (h *Handler) seedDefaultCategories(ctx context.Context, userID string) {
+var defaultPurchaseCategories = []struct {
+	Name    string
+	NameKey string
+}{
+	{"PC Hardware", "categoryNames.pcHardware"},
+	{"Entertainment", "categoryNames.entertainment"},
+	{"Kitchen", "categoryNames.kitchen"},
+	{"Tools", "categoryNames.tools"},
+	{"Household", "categoryNames.household"},
+}
+
+func (h *Handler) seedDefaultCategoriesIfEmpty(ctx context.Context, userID string, module string, defaults []struct {
+	Name    string
+	NameKey string
+}) {
+	existing, err := h.store.ListCategories(ctx, userID, module)
+	if err != nil {
+		h.logger.Error("listing categories for seed check", "module", module, "error", err)
+		return
+	}
+	if len(existing) > 0 {
+		return
+	}
+
 	now := time.Now().UTC()
-	for _, dc := range defaultCategories {
+	for _, dc := range defaults {
 		cat := model.Category{
 			ID:        uuid.New(),
 			Name:      dc.Name,
@@ -129,8 +156,8 @@ func (h *Handler) seedDefaultCategories(ctx context.Context, userID string) {
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
-		if err := h.store.CreateCategory(ctx, userID, cat); err != nil {
-			h.logger.Error("seeding default category", "name", dc.Name, "error", err)
+		if err := h.store.CreateCategory(ctx, userID, module, cat); err != nil {
+			h.logger.Error("seeding default category", "module", module, "name", dc.Name, "error", err)
 		}
 	}
 }

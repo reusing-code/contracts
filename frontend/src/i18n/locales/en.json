@@ -2,11 +2,24 @@
   "app": {
     "title": "Contracts"
   },
+  "home": {
+    "title": "Overview",
+    "activeContracts": "Active contracts",
+    "monthlySpend": "Monthly spend",
+    "totalPurchases": "Total purchases",
+    "totalSpent": "Total spent",
+    "quickStats": "Quick Stats",
+    "yearlyContracts": "Yearly contracts",
+    "categories": "Categories"
+  },
   "nav": {
     "dashboard": "Dashboard",
+    "contracts": "Contracts",
+    "purchases": "Purchases",
     "upcomingRenewals": "Upcoming Renewals",
     "settings": "Settings",
     "categories": "Categories",
+    "general": "General",
     "language": "Language",
     "en": "English",
     "de": "Deutsch"
@@ -24,7 +37,7 @@
     "create": "Create Category",
     "edit": "Edit Category",
     "delete": "Delete Category",
-    "deleteConfirm": "This will permanently delete the category \"{{name}}\" and all its contracts.",
+    "deleteConfirm": "This will permanently delete the category \"{{name}}\" and all its items.",
     "name": "Name",
     "namePlaceholder": "e.g. Insurance",
     "created": "Category created.",
@@ -46,6 +59,20 @@
     "backToDashboard": "Dashboard",
     "links": "Links"
   },
+  "purchase": {
+    "create": "Add Purchase",
+    "edit": "Edit Purchase",
+    "delete": "Delete Purchase",
+    "deleteConfirm": "This will permanently delete the purchase \"{{name}}\".",
+    "noPurchases": "No purchases in this category yet.",
+    "created": "Purchase created.",
+    "updated": "Purchase updated.",
+    "deleted": "Purchase deleted.",
+    "links": "Links",
+    "purchaseCount_one": "{{count}} purchase",
+    "purchaseCount_other": "{{count}} purchases",
+    "totalSpent": "Total: {{amount}}"
+  },
   "fields": {
     "name": "Contract Name",
     "productName": "Product",
@@ -66,10 +93,29 @@
     "paperlessUrl": "Paperless URL",
     "comments": "Comments"
   },
+  "purchaseFields": {
+    "itemName": "Item Name",
+    "type": "Type",
+    "brand": "Brand",
+    "articleNumber": "Article No.",
+    "dealer": "Dealer",
+    "price": "Price",
+    "purchaseDate": "Purchase Date",
+    "descriptionUrl": "Product Page URL",
+    "invoiceUrl": "Invoice URL",
+    "handbookUrl": "Handbook URL",
+    "consumables": "Consumables",
+    "comments": "Comments"
+  },
   "categoryNames": {
     "insurance": "Insurance",
     "banking": "Banking / Portfolios",
-    "telecommunications": "Telecommunications"
+    "telecommunications": "Telecommunications",
+    "pcHardware": "PC Hardware",
+    "entertainment": "Entertainment",
+    "kitchen": "Kitchen",
+    "tools": "Tools",
+    "household": "Household"
   },
   "auth": {
     "login": "Sign In",

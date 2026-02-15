@@ -275,15 +275,18 @@ func (s *BadgerStore) GetUserByEmail(_ context.Context, email string) (model.Use
 	return user, err
 }
 
-// Key helpers
+// Module-scoped category key helpers
+// Key format: u/{userID}/mod/{module}/cat/{categoryID}
 
-func catKey(userID string, id uuid.UUID) []byte {
-	return []byte(fmt.Sprintf("u/%s/cat/%s", userID, id))
+func modCatKey(userID, module string, id uuid.UUID) []byte {
+	return []byte(fmt.Sprintf("u/%s/mod/%s/cat/%s", userID, module, id))
 }
 
-func catPrefix(userID string) []byte {
-	return []byte(fmt.Sprintf("u/%s/cat/", userID))
+func modCatPrefix(userID, module string) []byte {
+	return []byte(fmt.Sprintf("u/%s/mod/%s/cat/", userID, module))
 }
+
+// Contract key helpers
 
 func conKey(userID string, id uuid.UUID) []byte {
 	return []byte(fmt.Sprintf("u/%s/con/%s", userID, id))
@@ -301,11 +304,31 @@ func idxCatConPrefix(userID string, categoryID uuid.UUID) []byte {
 	return []byte(fmt.Sprintf("u/%s/idx/cat_con/%s/", userID, categoryID))
 }
 
-// Categories
+// Purchase key helpers
+// Key format: u/{userID}/pur/{purchaseID}
+// Index: u/{userID}/idx/cat_pur/{categoryID}/{purchaseID}
 
-func (s *BadgerStore) ListCategories(_ context.Context, userID string) ([]model.Category, error) {
+func purKey(userID string, id uuid.UUID) []byte {
+	return []byte(fmt.Sprintf("u/%s/pur/%s", userID, id))
+}
+
+func purPrefix(userID string) []byte {
+	return []byte(fmt.Sprintf("u/%s/pur/", userID))
+}
+
+func idxCatPurKey(userID string, categoryID, purchaseID uuid.UUID) []byte {
+	return []byte(fmt.Sprintf("u/%s/idx/cat_pur/%s/%s", userID, categoryID, purchaseID))
+}
+
+func idxCatPurPrefix(userID string, categoryID uuid.UUID) []byte {
+	return []byte(fmt.Sprintf("u/%s/idx/cat_pur/%s/", userID, categoryID))
+}
+
+// Categories (module-scoped)
+
+func (s *BadgerStore) ListCategories(_ context.Context, userID string, module string) ([]model.Category, error) {
 	var categories []model.Category
-	prefix := catPrefix(userID)
+	prefix := modCatPrefix(userID, module)
 
 	err := s.db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
@@ -331,10 +354,10 @@ func (s *BadgerStore) ListCategories(_ context.Context, userID string) ([]model.
 	return categories, nil
 }
 
-func (s *BadgerStore) GetCategory(_ context.Context, userID string, id uuid.UUID) (model.Category, error) {
+func (s *BadgerStore) GetCategory(_ context.Context, userID string, module string, id uuid.UUID) (model.Category, error) {
 	var cat model.Category
 	err := s.db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(catKey(userID, id))
+		item, err := txn.Get(modCatKey(userID, module, id))
 		if err != nil {
 			return err
 		}
@@ -348,55 +371,53 @@ func (s *BadgerStore) GetCategory(_ context.Context, userID string, id uuid.UUID
 	return cat, err
 }
 
-func (s *BadgerStore) CreateCategory(_ context.Context, userID string, c model.Category) error {
+func (s *BadgerStore) CreateCategory(_ context.Context, userID string, module string, c model.Category) error {
 	data, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}
 	return s.db.Update(func(txn *badger.Txn) error {
-		return txn.Set(catKey(userID, c.ID), data)
+		return txn.Set(modCatKey(userID, module, c.ID), data)
 	})
 }
 
-func (s *BadgerStore) UpdateCategory(_ context.Context, userID string, c model.Category) error {
+func (s *BadgerStore) UpdateCategory(_ context.Context, userID string, module string, c model.Category) error {
 	data, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}
 	return s.db.Update(func(txn *badger.Txn) error {
-		if _, err := txn.Get(catKey(userID, c.ID)); err != nil {
+		if _, err := txn.Get(modCatKey(userID, module, c.ID)); err != nil {
 			if errors.Is(err, badger.ErrKeyNotFound) {
 				return ErrNotFound
 			}
 			return err
 		}
-		return txn.Set(catKey(userID, c.ID), data)
+		return txn.Set(modCatKey(userID, module, c.ID), data)
 	})
 }
 
-func (s *BadgerStore) DeleteCategory(_ context.Context, userID string, id uuid.UUID) error {
+func (s *BadgerStore) DeleteCategory(_ context.Context, userID string, module string, id uuid.UUID) error {
 	return s.db.Update(func(txn *badger.Txn) error {
-		if _, err := txn.Get(catKey(userID, id)); err != nil {
+		if _, err := txn.Get(modCatKey(userID, module, id)); err != nil {
 			if errors.Is(err, badger.ErrKeyNotFound) {
 				return ErrNotFound
 			}
 			return err
 		}
 
-		if err := txn.Delete(catKey(userID, id)); err != nil {
+		if err := txn.Delete(modCatKey(userID, module, id)); err != nil {
 			return err
 		}
 
-		// Delete all contracts in this category via the index
-		prefix := idxCatConPrefix(userID, id)
+		// Delete all contracts in this category via the contract index
+		conPrefix := idxCatConPrefix(userID, id)
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
-		defer it.Close()
 
 		var contractIDs []uuid.UUID
-		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		for it.Seek(conPrefix); it.ValidForPrefix(conPrefix); it.Next() {
 			key := it.Item().Key()
-			// Extract contract ID from the end of the index key
-			conIDStr := string(key[len(prefix):])
+			conIDStr := string(key[len(conPrefix):])
 			conID, err := uuid.Parse(conIDStr)
 			if err != nil {
 				continue
@@ -405,11 +426,36 @@ func (s *BadgerStore) DeleteCategory(_ context.Context, userID string, id uuid.U
 		}
 		it.Close()
 
-		for _, conID := range contractIDs {
-			if err := txn.Delete(conKey(userID, conID)); err != nil {
+		for _, cID := range contractIDs {
+			if err := txn.Delete(conKey(userID, cID)); err != nil {
 				return err
 			}
-			if err := txn.Delete(idxCatConKey(userID, id, conID)); err != nil {
+			if err := txn.Delete(idxCatConKey(userID, id, cID)); err != nil {
+				return err
+			}
+		}
+
+		// Delete all purchases in this category via the purchase index
+		purIdxPrefix := idxCatPurPrefix(userID, id)
+		it2 := txn.NewIterator(badger.DefaultIteratorOptions)
+
+		var purchaseIDs []uuid.UUID
+		for it2.Seek(purIdxPrefix); it2.ValidForPrefix(purIdxPrefix); it2.Next() {
+			key := it2.Item().Key()
+			pIDStr := string(key[len(purIdxPrefix):])
+			pID, err := uuid.Parse(pIDStr)
+			if err != nil {
+				continue
+			}
+			purchaseIDs = append(purchaseIDs, pID)
+		}
+		it2.Close()
+
+		for _, pID := range purchaseIDs {
+			if err := txn.Delete(purKey(userID, pID)); err != nil {
+				return err
+			}
+			if err := txn.Delete(idxCatPurKey(userID, id, pID)); err != nil {
 				return err
 			}
 		}
@@ -529,7 +575,6 @@ func (s *BadgerStore) UpdateContract(_ context.Context, userID string, c model.C
 		return err
 	}
 	return s.db.Update(func(txn *badger.Txn) error {
-		// Get existing to check old categoryID
 		item, err := txn.Get(conKey(userID, c.ID))
 		if err != nil {
 			if errors.Is(err, badger.ErrKeyNotFound) {
@@ -549,7 +594,6 @@ func (s *BadgerStore) UpdateContract(_ context.Context, userID string, c model.C
 			return err
 		}
 
-		// Update index if category changed
 		if old.CategoryID != c.CategoryID {
 			if err := txn.Delete(idxCatConKey(userID, old.CategoryID, c.ID)); err != nil {
 				return err
@@ -584,5 +628,172 @@ func (s *BadgerStore) DeleteContract(_ context.Context, userID string, id uuid.U
 			return err
 		}
 		return txn.Delete(idxCatConKey(userID, con.CategoryID, id))
+	})
+}
+
+// Purchases
+
+func (s *BadgerStore) ListPurchases(_ context.Context, userID string) ([]model.Purchase, error) {
+	var purchases []model.Purchase
+	prefix := purPrefix(userID)
+
+	err := s.db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			var p model.Purchase
+			if err := it.Item().Value(func(val []byte) error {
+				return json.Unmarshal(val, &p)
+			}); err != nil {
+				return err
+			}
+			purchases = append(purchases, p)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if purchases == nil {
+		purchases = []model.Purchase{}
+	}
+	return purchases, nil
+}
+
+func (s *BadgerStore) ListPurchasesByCategory(_ context.Context, userID string, categoryID uuid.UUID) ([]model.Purchase, error) {
+	var purchases []model.Purchase
+	prefix := idxCatPurPrefix(userID, categoryID)
+
+	err := s.db.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = false
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			key := it.Item().Key()
+			pIDStr := string(key[len(prefix):])
+			pID, err := uuid.Parse(pIDStr)
+			if err != nil {
+				continue
+			}
+
+			item, err := txn.Get(purKey(userID, pID))
+			if err != nil {
+				if errors.Is(err, badger.ErrKeyNotFound) {
+					continue
+				}
+				return err
+			}
+
+			var p model.Purchase
+			if err := item.Value(func(val []byte) error {
+				return json.Unmarshal(val, &p)
+			}); err != nil {
+				return err
+			}
+			purchases = append(purchases, p)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if purchases == nil {
+		purchases = []model.Purchase{}
+	}
+	return purchases, nil
+}
+
+func (s *BadgerStore) GetPurchase(_ context.Context, userID string, id uuid.UUID) (model.Purchase, error) {
+	var p model.Purchase
+	err := s.db.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(purKey(userID, id))
+		if err != nil {
+			return err
+		}
+		return item.Value(func(val []byte) error {
+			return json.Unmarshal(val, &p)
+		})
+	})
+	if errors.Is(err, badger.ErrKeyNotFound) {
+		return p, ErrNotFound
+	}
+	return p, err
+}
+
+func (s *BadgerStore) CreatePurchase(_ context.Context, userID string, p model.Purchase) error {
+	data, err := json.Marshal(p)
+	if err != nil {
+		return err
+	}
+	return s.db.Update(func(txn *badger.Txn) error {
+		if err := txn.Set(purKey(userID, p.ID), data); err != nil {
+			return err
+		}
+		return txn.Set(idxCatPurKey(userID, p.CategoryID, p.ID), []byte{})
+	})
+}
+
+func (s *BadgerStore) UpdatePurchase(_ context.Context, userID string, p model.Purchase) error {
+	data, err := json.Marshal(p)
+	if err != nil {
+		return err
+	}
+	return s.db.Update(func(txn *badger.Txn) error {
+		item, err := txn.Get(purKey(userID, p.ID))
+		if err != nil {
+			if errors.Is(err, badger.ErrKeyNotFound) {
+				return ErrNotFound
+			}
+			return err
+		}
+
+		var old model.Purchase
+		if err := item.Value(func(val []byte) error {
+			return json.Unmarshal(val, &old)
+		}); err != nil {
+			return err
+		}
+
+		if err := txn.Set(purKey(userID, p.ID), data); err != nil {
+			return err
+		}
+
+		if old.CategoryID != p.CategoryID {
+			if err := txn.Delete(idxCatPurKey(userID, old.CategoryID, p.ID)); err != nil {
+				return err
+			}
+			if err := txn.Set(idxCatPurKey(userID, p.CategoryID, p.ID), []byte{}); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func (s *BadgerStore) DeletePurchase(_ context.Context, userID string, id uuid.UUID) error {
+	return s.db.Update(func(txn *badger.Txn) error {
+		item, err := txn.Get(purKey(userID, id))
+		if err != nil {
+			if errors.Is(err, badger.ErrKeyNotFound) {
+				return ErrNotFound
+			}
+			return err
+		}
+
+		var p model.Purchase
+		if err := item.Value(func(val []byte) error {
+			return json.Unmarshal(val, &p)
+		}); err != nil {
+			return err
+		}
+
+		if err := txn.Delete(purKey(userID, id)); err != nil {
+			return err
+		}
+		return txn.Delete(idxCatPurKey(userID, p.CategoryID, id))
 	})
 }

@@ -13,21 +13,36 @@ import {
 
 interface CategoryCardProps {
   category: Category
-  contractCount: number
-  monthlyTotal: number
-  yearlyTotal: number
+  module: "contracts" | "purchases"
+  totalAmount: number
+  secondaryAmount?: number
+  itemLabel: string
+  totalLabel: string
+  secondaryLabel?: string
   onEdit: () => void
   onDelete: () => void
 }
 
-export function CategoryCard({ category, contractCount, monthlyTotal, yearlyTotal, onEdit, onDelete }: CategoryCardProps) {
+export function CategoryCard({
+  category,
+  module,
+  totalAmount,
+  secondaryAmount,
+  itemLabel,
+  totalLabel,
+  secondaryLabel,
+  onEdit,
+  onDelete,
+}: CategoryCardProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+
+  const basePath = module === "contracts" ? "/contracts" : "/purchases"
 
   return (
     <Card
       className="cursor-pointer transition-colors hover:bg-accent/50"
-      onClick={() => navigate({ to: "/categories/$categoryId", params: { categoryId: category.id } })}
+      onClick={() => navigate({ to: `${basePath}/categories/$categoryId`, params: { categoryId: category.id } })}
     >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-lg font-semibold">
@@ -49,20 +64,16 @@ export function CategoryCard({ category, contractCount, monthlyTotal, yearlyTota
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">
-          {t("dashboard.contractCount", { count: contractCount })}
+          {itemLabel}
         </p>
-        {monthlyTotal > 0 && (
+        {totalAmount > 0 && (
           <p className="text-sm font-medium mt-1">
-            {t("dashboard.monthlyTotal", {
-              amount: `${monthlyTotal.toFixed(2)} ${t("common.currency")}`,
-            })}
+            {totalLabel}
           </p>
         )}
-        {yearlyTotal > 0 && (
+        {secondaryAmount !== undefined && secondaryAmount > 0 && secondaryLabel && (
           <p className="text-sm font-medium mt-1">
-            {t("dashboard.yearlyTotal", {
-              amount: `${yearlyTotal.toFixed(2)} ${t("common.currency")}`,
-            })}
+            {secondaryLabel}
           </p>
         )}
       </CardContent>

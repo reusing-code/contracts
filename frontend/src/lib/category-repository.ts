@@ -1,22 +1,22 @@
 import type { Category, CategoryFormData } from "@/types/category"
 import { del, get, post, put } from "./api"
 
-export async function getAllCategories(): Promise<Category[]> {
-  return get<Category[]>("/categories")
+export async function getAllCategories(module: string): Promise<Category[]> {
+  return get<Category[]>(`/modules/${module}/categories`)
 }
 
-export async function getCategoryById(id: string): Promise<Category | undefined> {
-  return get<Category>(`/categories/${id}`)
+export async function getCategoryById(module: string, id: string): Promise<Category | undefined> {
+  return get<Category>(`/modules/${module}/categories/${id}`)
 }
 
-export async function createCategory(data: CategoryFormData): Promise<Category> {
-  return post<Category>("/categories", data)
+export async function createCategory(module: string, data: CategoryFormData): Promise<Category> {
+  return post<Category>(`/modules/${module}/categories`, data)
 }
 
-export async function updateCategory(id: string, data: CategoryFormData): Promise<Category> {
-  return put<Category>(`/categories/${id}`, data)
+export async function updateCategory(module: string, id: string, data: CategoryFormData): Promise<Category> {
+  return put<Category>(`/modules/${module}/categories/${id}`, data)
 }
 
-export async function deleteCategory(id: string): Promise<void> {
-  return del(`/categories/${id}`)
+export async function deleteCategory(module: string, id: string): Promise<void> {
+  return del(`/modules/${module}/categories/${id}`)
 }

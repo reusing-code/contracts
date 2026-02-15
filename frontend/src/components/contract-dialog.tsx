@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form"
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema"
 import { contractFormSchema, type ContractFormData, type Contract } from "@/types/contract"
 import { contractFields } from "@/config/contract-fields"
-import { ContractFormField } from "@/components/contract-form-field"
+import { FormFieldRenderer } from "@/components/contract-form-field"
 import {
   Dialog,
   DialogContent,
@@ -80,7 +80,7 @@ export function ContractDialog({ open, onOpenChange, contract, onSubmit }: Contr
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             {contractFields.map((field) => (
-              <ContractFormField key={field.key} config={field} control={form.control} />
+              <FormFieldRenderer<ContractFormData> key={field.key} config={field} control={form.control} />
             ))}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

@@ -12,6 +12,7 @@ import (
 )
 
 const testUser = "test-user"
+const testModule = "contracts"
 
 func newTestStore(t *testing.T) *BadgerStore {
 	t.Helper()
@@ -45,6 +46,17 @@ func makeContract(categoryID uuid.UUID, name string) model.Contract {
 	}
 }
 
+func makePurchase(categoryID uuid.UUID, name string) model.Purchase {
+	now := time.Now().UTC()
+	return model.Purchase{
+		ID:         uuid.New(),
+		CategoryID: categoryID,
+		ItemName:   name,
+		CreatedAt:  now,
+		UpdatedAt:  now,
+	}
+}
+
 // Category CRUD
 
 func TestCreateAndGetCategory(t *testing.T) {
@@ -52,11 +64,11 @@ func TestCreateAndGetCategory(t *testing.T) {
 	ctx := context.Background()
 	cat := makeCategory("Insurance")
 
-	if err := s.CreateCategory(ctx, testUser, cat); err != nil {
+	if err := s.CreateCategory(ctx, testUser, testModule, cat); err != nil {
 		t.Fatalf("CreateCategory: %v", err)
 	}
 
-	got, err := s.GetCategory(ctx, testUser, cat.ID)
+	got, err := s.GetCategory(ctx, testUser, testModule, cat.ID)
 	if err != nil {
 		t.Fatalf("GetCategory: %v", err)
 	}
@@ -69,7 +81,7 @@ func TestListCategories(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 
-	cats, err := s.ListCategories(ctx, testUser)
+	cats, err := s.ListCategories(ctx, testUser, testModule)
 	if err != nil {
 		t.Fatalf("ListCategories: %v", err)
 	}
@@ -78,12 +90,12 @@ func TestListCategories(t *testing.T) {
 	}
 
 	for _, name := range []string{"A", "B", "C"} {
-		if err := s.CreateCategory(ctx, testUser, makeCategory(name)); err != nil {
+		if err := s.CreateCategory(ctx, testUser, testModule, makeCategory(name)); err != nil {
 			t.Fatalf("CreateCategory(%s): %v", name, err)
 		}
 	}
 
-	cats, err = s.ListCategories(ctx, testUser)
+	cats, err = s.ListCategories(ctx, testUser, testModule)
 	if err != nil {
 		t.Fatalf("ListCategories: %v", err)
 	}
@@ -97,17 +109,17 @@ func TestUpdateCategory(t *testing.T) {
 	ctx := context.Background()
 	cat := makeCategory("Old")
 
-	if err := s.CreateCategory(ctx, testUser, cat); err != nil {
+	if err := s.CreateCategory(ctx, testUser, testModule, cat); err != nil {
 		t.Fatalf("CreateCategory: %v", err)
 	}
 
 	cat.Name = "New"
 	cat.UpdatedAt = time.Now().UTC()
-	if err := s.UpdateCategory(ctx, testUser, cat); err != nil {
+	if err := s.UpdateCategory(ctx, testUser, testModule, cat); err != nil {
 		t.Fatalf("UpdateCategory: %v", err)
 	}
 
-	got, err := s.GetCategory(ctx, testUser, cat.ID)
+	got, err := s.GetCategory(ctx, testUser, testModule, cat.ID)
 	if err != nil {
 		t.Fatalf("GetCategory: %v", err)
 	}
@@ -121,14 +133,14 @@ func TestDeleteCategory(t *testing.T) {
 	ctx := context.Background()
 	cat := makeCategory("ToDelete")
 
-	if err := s.CreateCategory(ctx, testUser, cat); err != nil {
+	if err := s.CreateCategory(ctx, testUser, testModule, cat); err != nil {
 		t.Fatalf("CreateCategory: %v", err)
 	}
-	if err := s.DeleteCategory(ctx, testUser, cat.ID); err != nil {
+	if err := s.DeleteCategory(ctx, testUser, testModule, cat.ID); err != nil {
 		t.Fatalf("DeleteCategory: %v", err)
 	}
 
-	_, err := s.GetCategory(ctx, testUser, cat.ID)
+	_, err := s.GetCategory(ctx, testUser, testModule, cat.ID)
 	if !errors.Is(err, ErrNotFound) {
 		t.Fatalf("expected ErrNotFound, got %v", err)
 	}
@@ -136,7 +148,7 @@ func TestDeleteCategory(t *testing.T) {
 
 func TestGetCategory_NotFound(t *testing.T) {
 	s := newTestStore(t)
-	_, err := s.GetCategory(context.Background(), testUser, uuid.New())
+	_, err := s.GetCategory(context.Background(), testUser, testModule, uuid.New())
 	if !errors.Is(err, ErrNotFound) {
 		t.Fatalf("expected ErrNotFound, got %v", err)
 	}
@@ -144,7 +156,7 @@ func TestGetCategory_NotFound(t *testing.T) {
 
 func TestUpdateCategory_NotFound(t *testing.T) {
 	s := newTestStore(t)
-	err := s.UpdateCategory(context.Background(), testUser, makeCategory("Ghost"))
+	err := s.UpdateCategory(context.Background(), testUser, testModule, makeCategory("Ghost"))
 	if !errors.Is(err, ErrNotFound) {
 		t.Fatalf("expected ErrNotFound, got %v", err)
 	}
@@ -152,9 +164,30 @@ func TestUpdateCategory_NotFound(t *testing.T) {
 
 func TestDeleteCategory_NotFound(t *testing.T) {
 	s := newTestStore(t)
-	err := s.DeleteCategory(context.Background(), testUser, uuid.New())
+	err := s.DeleteCategory(context.Background(), testUser, testModule, uuid.New())
 	if !errors.Is(err, ErrNotFound) {
 		t.Fatalf("expected ErrNotFound, got %v", err)
+	}
+}
+
+// Module isolation for categories
+
+func TestCategoryModuleIsolation(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+
+	cat := makeCategory("Insurance")
+	s.CreateCategory(ctx, testUser, "contracts", cat)
+
+	// Should not be visible under "purchases" module
+	cats, _ := s.ListCategories(ctx, testUser, "purchases")
+	if len(cats) != 0 {
+		t.Errorf("purchases module should see 0 categories, got %d", len(cats))
+	}
+
+	_, err := s.GetCategory(ctx, testUser, "purchases", cat.ID)
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("purchases module should get ErrNotFound, got %v", err)
 	}
 }
 
@@ -164,7 +197,7 @@ func TestCreateAndGetContract(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 	cat := makeCategory("Cat")
-	s.CreateCategory(ctx, testUser, cat)
+	s.CreateCategory(ctx, testUser, testModule, cat)
 
 	con := makeContract(cat.ID, "Phone Plan")
 	if err := s.CreateContract(ctx, testUser, con); err != nil {
@@ -187,7 +220,7 @@ func TestListContracts(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 	cat := makeCategory("Cat")
-	s.CreateCategory(ctx, testUser, cat)
+	s.CreateCategory(ctx, testUser, testModule, cat)
 
 	for _, name := range []string{"A", "B"} {
 		s.CreateContract(ctx, testUser, makeContract(cat.ID, name))
@@ -208,8 +241,8 @@ func TestListContractsByCategory(t *testing.T) {
 
 	cat1 := makeCategory("Cat1")
 	cat2 := makeCategory("Cat2")
-	s.CreateCategory(ctx, testUser, cat1)
-	s.CreateCategory(ctx, testUser, cat2)
+	s.CreateCategory(ctx, testUser, testModule, cat1)
+	s.CreateCategory(ctx, testUser, testModule, cat2)
 
 	s.CreateContract(ctx, testUser, makeContract(cat1.ID, "C1"))
 	s.CreateContract(ctx, testUser, makeContract(cat1.ID, "C2"))
@@ -236,7 +269,7 @@ func TestUpdateContract(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 	cat := makeCategory("Cat")
-	s.CreateCategory(ctx, testUser, cat)
+	s.CreateCategory(ctx, testUser, testModule, cat)
 
 	con := makeContract(cat.ID, "Old")
 	s.CreateContract(ctx, testUser, con)
@@ -260,7 +293,7 @@ func TestDeleteContract(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 	cat := makeCategory("Cat")
-	s.CreateCategory(ctx, testUser, cat)
+	s.CreateCategory(ctx, testUser, testModule, cat)
 
 	con := makeContract(cat.ID, "ToDelete")
 	s.CreateContract(ctx, testUser, con)
@@ -286,7 +319,7 @@ func TestGetContract_NotFound(t *testing.T) {
 func TestUpdateContract_NotFound(t *testing.T) {
 	s := newTestStore(t)
 	cat := makeCategory("Cat")
-	s.CreateCategory(context.Background(), testUser, cat)
+	s.CreateCategory(context.Background(), testUser, testModule, cat)
 	err := s.UpdateContract(context.Background(), testUser, makeContract(cat.ID, "Ghost"))
 	if !errors.Is(err, ErrNotFound) {
 		t.Fatalf("expected ErrNotFound, got %v", err)
@@ -307,14 +340,14 @@ func TestDeleteCategory_CascadesContracts(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 	cat := makeCategory("Cat")
-	s.CreateCategory(ctx, testUser, cat)
+	s.CreateCategory(ctx, testUser, testModule, cat)
 
 	con1 := makeContract(cat.ID, "C1")
 	con2 := makeContract(cat.ID, "C2")
 	s.CreateContract(ctx, testUser, con1)
 	s.CreateContract(ctx, testUser, con2)
 
-	if err := s.DeleteCategory(ctx, testUser, cat.ID); err != nil {
+	if err := s.DeleteCategory(ctx, testUser, testModule, cat.ID); err != nil {
 		t.Fatalf("DeleteCategory: %v", err)
 	}
 
@@ -326,13 +359,44 @@ func TestDeleteCategory_CascadesContracts(t *testing.T) {
 		}
 	}
 
-	// Index should be clean — listing by deleted category returns empty
+	// Index should be clean
 	list, err := s.ListContractsByCategory(ctx, testUser, cat.ID)
 	if err != nil {
 		t.Fatalf("ListContractsByCategory: %v", err)
 	}
 	if len(list) != 0 {
 		t.Errorf("expected 0 contracts after cascade, got %d", len(list))
+	}
+}
+
+func TestDeleteCategory_CascadesPurchases(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+	cat := makeCategory("Cat")
+	s.CreateCategory(ctx, testUser, "purchases", cat)
+
+	p1 := makePurchase(cat.ID, "Item1")
+	p2 := makePurchase(cat.ID, "Item2")
+	s.CreatePurchase(ctx, testUser, p1)
+	s.CreatePurchase(ctx, testUser, p2)
+
+	if err := s.DeleteCategory(ctx, testUser, "purchases", cat.ID); err != nil {
+		t.Fatalf("DeleteCategory: %v", err)
+	}
+
+	for _, id := range []uuid.UUID{p1.ID, p2.ID} {
+		_, err := s.GetPurchase(ctx, testUser, id)
+		if !errors.Is(err, ErrNotFound) {
+			t.Errorf("purchase %s: expected ErrNotFound, got %v", id, err)
+		}
+	}
+
+	list, err := s.ListPurchasesByCategory(ctx, testUser, cat.ID)
+	if err != nil {
+		t.Fatalf("ListPurchasesByCategory: %v", err)
+	}
+	if len(list) != 0 {
+		t.Errorf("expected 0 purchases after cascade, got %d", len(list))
 	}
 }
 
@@ -344,20 +408,18 @@ func TestUpdateContract_CategoryChange_UpdatesIndex(t *testing.T) {
 
 	cat1 := makeCategory("Cat1")
 	cat2 := makeCategory("Cat2")
-	s.CreateCategory(ctx, testUser, cat1)
-	s.CreateCategory(ctx, testUser, cat2)
+	s.CreateCategory(ctx, testUser, testModule, cat1)
+	s.CreateCategory(ctx, testUser, testModule, cat2)
 
 	con := makeContract(cat1.ID, "Moveable")
 	s.CreateContract(ctx, testUser, con)
 
-	// Move contract to cat2
 	con.CategoryID = cat2.ID
 	con.UpdatedAt = time.Now().UTC()
 	if err := s.UpdateContract(ctx, testUser, con); err != nil {
 		t.Fatalf("UpdateContract: %v", err)
 	}
 
-	// cat1 should have 0, cat2 should have 1
 	list1, _ := s.ListContractsByCategory(ctx, testUser, cat1.ID)
 	list2, _ := s.ListContractsByCategory(ctx, testUser, cat2.ID)
 
@@ -374,7 +436,7 @@ func TestDeleteContract_CleansIndex(t *testing.T) {
 	ctx := context.Background()
 
 	cat := makeCategory("Cat")
-	s.CreateCategory(ctx, testUser, cat)
+	s.CreateCategory(ctx, testUser, testModule, cat)
 
 	con := makeContract(cat.ID, "C")
 	s.CreateContract(ctx, testUser, con)
@@ -383,6 +445,160 @@ func TestDeleteContract_CleansIndex(t *testing.T) {
 	list, _ := s.ListContractsByCategory(ctx, testUser, cat.ID)
 	if len(list) != 0 {
 		t.Errorf("expected 0 contracts after delete, got %d", len(list))
+	}
+}
+
+// Purchase CRUD
+
+func TestCreateAndGetPurchase(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+	cat := makeCategory("Cat")
+	s.CreateCategory(ctx, testUser, "purchases", cat)
+
+	p := makePurchase(cat.ID, "GPU")
+	if err := s.CreatePurchase(ctx, testUser, p); err != nil {
+		t.Fatalf("CreatePurchase: %v", err)
+	}
+
+	got, err := s.GetPurchase(ctx, testUser, p.ID)
+	if err != nil {
+		t.Fatalf("GetPurchase: %v", err)
+	}
+	if got.ItemName != p.ItemName {
+		t.Errorf("ItemName = %q, want %q", got.ItemName, p.ItemName)
+	}
+	if got.CategoryID != cat.ID {
+		t.Errorf("CategoryID = %s, want %s", got.CategoryID, cat.ID)
+	}
+}
+
+func TestListPurchases(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+	cat := makeCategory("Cat")
+	s.CreateCategory(ctx, testUser, "purchases", cat)
+
+	for _, name := range []string{"A", "B"} {
+		s.CreatePurchase(ctx, testUser, makePurchase(cat.ID, name))
+	}
+
+	all, err := s.ListPurchases(ctx, testUser)
+	if err != nil {
+		t.Fatalf("ListPurchases: %v", err)
+	}
+	if len(all) != 2 {
+		t.Fatalf("expected 2 purchases, got %d", len(all))
+	}
+}
+
+func TestListPurchasesByCategory(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+
+	cat1 := makeCategory("Cat1")
+	cat2 := makeCategory("Cat2")
+	s.CreateCategory(ctx, testUser, "purchases", cat1)
+	s.CreateCategory(ctx, testUser, "purchases", cat2)
+
+	s.CreatePurchase(ctx, testUser, makePurchase(cat1.ID, "P1"))
+	s.CreatePurchase(ctx, testUser, makePurchase(cat1.ID, "P2"))
+	s.CreatePurchase(ctx, testUser, makePurchase(cat2.ID, "P3"))
+
+	list, err := s.ListPurchasesByCategory(ctx, testUser, cat1.ID)
+	if err != nil {
+		t.Fatalf("ListPurchasesByCategory: %v", err)
+	}
+	if len(list) != 2 {
+		t.Fatalf("expected 2 purchases for cat1, got %d", len(list))
+	}
+
+	list, err = s.ListPurchasesByCategory(ctx, testUser, cat2.ID)
+	if err != nil {
+		t.Fatalf("ListPurchasesByCategory: %v", err)
+	}
+	if len(list) != 1 {
+		t.Fatalf("expected 1 purchase for cat2, got %d", len(list))
+	}
+}
+
+func TestUpdatePurchase(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+	cat := makeCategory("Cat")
+	s.CreateCategory(ctx, testUser, "purchases", cat)
+
+	p := makePurchase(cat.ID, "Old")
+	s.CreatePurchase(ctx, testUser, p)
+
+	p.ItemName = "New"
+	p.UpdatedAt = time.Now().UTC()
+	if err := s.UpdatePurchase(ctx, testUser, p); err != nil {
+		t.Fatalf("UpdatePurchase: %v", err)
+	}
+
+	got, err := s.GetPurchase(ctx, testUser, p.ID)
+	if err != nil {
+		t.Fatalf("GetPurchase: %v", err)
+	}
+	if got.ItemName != "New" {
+		t.Errorf("ItemName = %q, want %q", got.ItemName, "New")
+	}
+}
+
+func TestDeletePurchase(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+	cat := makeCategory("Cat")
+	s.CreateCategory(ctx, testUser, "purchases", cat)
+
+	p := makePurchase(cat.ID, "ToDelete")
+	s.CreatePurchase(ctx, testUser, p)
+
+	if err := s.DeletePurchase(ctx, testUser, p.ID); err != nil {
+		t.Fatalf("DeletePurchase: %v", err)
+	}
+
+	_, err := s.GetPurchase(ctx, testUser, p.ID)
+	if !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestGetPurchase_NotFound(t *testing.T) {
+	s := newTestStore(t)
+	_, err := s.GetPurchase(context.Background(), testUser, uuid.New())
+	if !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestUpdatePurchase_CategoryChange_UpdatesIndex(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+
+	cat1 := makeCategory("Cat1")
+	cat2 := makeCategory("Cat2")
+	s.CreateCategory(ctx, testUser, "purchases", cat1)
+	s.CreateCategory(ctx, testUser, "purchases", cat2)
+
+	p := makePurchase(cat1.ID, "Moveable")
+	s.CreatePurchase(ctx, testUser, p)
+
+	p.CategoryID = cat2.ID
+	p.UpdatedAt = time.Now().UTC()
+	if err := s.UpdatePurchase(ctx, testUser, p); err != nil {
+		t.Fatalf("UpdatePurchase: %v", err)
+	}
+
+	list1, _ := s.ListPurchasesByCategory(ctx, testUser, cat1.ID)
+	list2, _ := s.ListPurchasesByCategory(ctx, testUser, cat2.ID)
+
+	if len(list1) != 0 {
+		t.Errorf("cat1 should have 0 purchases, got %d", len(list1))
+	}
+	if len(list2) != 1 {
+		t.Errorf("cat2 should have 1 purchase, got %d", len(list2))
 	}
 }
 
@@ -454,14 +670,14 @@ func TestUserIsolation(t *testing.T) {
 	ctx := context.Background()
 
 	cat := makeCategory("UserA-Cat")
-	s.CreateCategory(ctx, "user-a", cat)
+	s.CreateCategory(ctx, "user-a", testModule, cat)
 
-	cats, _ := s.ListCategories(ctx, "user-b")
+	cats, _ := s.ListCategories(ctx, "user-b", testModule)
 	if len(cats) != 0 {
 		t.Errorf("user-b should see 0 categories, got %d", len(cats))
 	}
 
-	_, err := s.GetCategory(ctx, "user-b", cat.ID)
+	_, err := s.GetCategory(ctx, "user-b", testModule, cat.ID)
 	if !errors.Is(err, ErrNotFound) {
 		t.Errorf("user-b should get ErrNotFound, got %v", err)
 	}

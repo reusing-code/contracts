@@ -1,126 +1,125 @@
-import { useState } from "react"
-import { createRoute } from "@tanstack/react-router"
+import { createRoute, Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { usePageTitle } from "@/hooks/use-page-title"
-import { toast } from "sonner"
-import { Plus, Upload } from "lucide-react"
-import { rootRoute } from "./__root"
-import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/use-categories"
-import { getSummary } from "@/lib/contract-repository"
 import { useQuery } from "@tanstack/react-query"
-import type { Category, CategoryFormData } from "@/types/category"
-import { Button } from "@/components/ui/button"
-import { CategoryCard } from "@/components/category-card"
-import { CategoryDialog } from "@/components/category-dialog"
-import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-import { ImportDialog } from "@/components/import-dialog"
+import { rootRoute } from "./__root"
+import { getSummary } from "@/lib/contract-repository"
+import { getPurchaseSummary } from "@/lib/purchase-repository"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { FileText, ShoppingBag, ArrowRight, CalendarClock } from "lucide-react"
 
 export const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: DashboardPage,
+  component: HomePage,
 })
 
-function DashboardPage() {
+function HomePage() {
   const { t } = useTranslation()
-  usePageTitle(t("nav.dashboard"), t("app.title"))
-  const { data: categories = [] } = useCategories()
-  const { data: summary } = useQuery({
+  usePageTitle(t("home.title"), t("app.title"))
+
+  const { data: contractSummary } = useQuery({
     queryKey: ["summary"],
     queryFn: getSummary,
   })
-  const summaryByCategory = new Map(
-    (summary?.categories ?? []).map((s) => [s.id, s]),
-  )
-  const createCategory = useCreateCategory()
-  const updateCategory = useUpdateCategory()
-  const deleteCategory = useDeleteCategory()
 
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [importOpen, setImportOpen] = useState(false)
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
-  const [deletingCategory, setDeletingCategory] = useState<Category | null>(null)
-
-  function handleCreate(data: CategoryFormData) {
-    createCategory.mutate(data, { onSuccess: () => toast.success(t("category.created")) })
-  }
-
-  function handleUpdate(data: CategoryFormData) {
-    if (!editingCategory) return
-    updateCategory.mutate(
-      { id: editingCategory.id, data },
-      { onSuccess: () => toast.success(t("category.updated")) },
-    )
-    setEditingCategory(null)
-  }
-
-  function handleDelete() {
-    if (!deletingCategory) return
-    deleteCategory.mutate(deletingCategory.id, {
-      onSuccess: () => toast.success(t("category.deleted")),
-    })
-    setDeletingCategory(null)
-  }
+  const { data: purchaseSummary } = useQuery({
+    queryKey: ["purchases-summary"],
+    queryFn: getPurchaseSummary,
+  })
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t("dashboard.title")}</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setImportOpen(true)}>
-            <Upload className="mr-2 h-4 w-4" />
-            {t("import.button")}
-          </Button>
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            {t("dashboard.newCategory")}
-          </Button>
-        </div>
+    <div className="space-y-8">
+      <h1 className="text-2xl font-bold">{t("home.title")}</h1>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <Link to="/contracts" className="group">
+          <Card className="transition-colors group-hover:bg-accent/50">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <FileText className="h-5 w-5 text-primary" />
+                  </div>
+                  <CardTitle className="text-xl">{t("nav.contracts")}</CardTitle>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-2xl font-bold">{contractSummary?.totalContracts ?? 0}</p>
+                  <p className="text-sm text-muted-foreground">{t("home.activeContracts")}</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    {(contractSummary?.totalMonthlyAmount ?? 0).toFixed(2)} {t("common.currency")}
+                  </p>
+                  <p className="text-sm text-muted-foreground">{t("home.monthlySpend")}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/purchases" className="group">
+          <Card className="transition-colors group-hover:bg-accent/50">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <ShoppingBag className="h-5 w-5 text-primary" />
+                  </div>
+                  <CardTitle className="text-xl">{t("nav.purchases")}</CardTitle>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-2xl font-bold">{purchaseSummary?.totalPurchases ?? 0}</p>
+                  <p className="text-sm text-muted-foreground">{t("home.totalPurchases")}</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    {(purchaseSummary?.totalSpent ?? 0).toFixed(2)} {t("common.currency")}
+                  </p>
+                  <p className="text-sm text-muted-foreground">{t("home.totalSpent")}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
-      {categories.length === 0 ? (
-        <p className="text-muted-foreground">{t("dashboard.noCategories")}</p>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {categories.map((cat) => (
-            <CategoryCard
-              key={cat.id}
-              category={cat}
-              contractCount={summaryByCategory.get(cat.id)?.contractCount ?? 0}
-              monthlyTotal={summaryByCategory.get(cat.id)?.monthlyTotal ?? 0}
-              yearlyTotal={summaryByCategory.get(cat.id)?.yearlyTotal ?? 0}
-              onEdit={() => {
-                setEditingCategory(cat)
-              }}
-              onDelete={() => {
-                setDeletingCategory(cat)
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      <CategoryDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSubmit={handleCreate}
-      />
-
-      <CategoryDialog
-        open={!!editingCategory}
-        onOpenChange={(open) => { if (!open) setEditingCategory(null) }}
-        category={editingCategory}
-        onSubmit={handleUpdate}
-      />
-
-      <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
-
-      <DeleteConfirmDialog
-        open={!!deletingCategory}
-        onOpenChange={(open) => { if (!open) setDeletingCategory(null) }}
-        description={t("category.deleteConfirm", { name: deletingCategory?.nameKey ? t(deletingCategory.nameKey) : deletingCategory?.name ?? "" })}
-        onConfirm={handleDelete}
-      />
+      <div className="grid gap-6 sm:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CalendarClock className="h-4 w-4" />
+              {t("home.quickStats")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">{t("home.yearlyContracts")}</dt>
+                <dd className="font-medium">
+                  {(contractSummary?.totalYearlyAmount ?? 0).toFixed(2)} {t("common.currency")}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">{t("home.categories")}</dt>
+                <dd className="font-medium">
+                  {(contractSummary?.categories?.length ?? 0) + (purchaseSummary?.categories?.length ?? 0)}
+                </dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

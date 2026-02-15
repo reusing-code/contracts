@@ -14,9 +14,9 @@ import { ContractsTable } from "@/components/contracts-table"
 import { ContractDialog } from "@/components/contract-dialog"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
-export const upcomingRenewalsRoute = createRoute({
+export const contractsUpcomingRenewalsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/upcoming-renewals",
+  path: "/contracts/upcoming-renewals",
   component: UpcomingRenewalsPage,
 })
 
@@ -34,7 +34,7 @@ function UpcomingRenewalsPage() {
     mutationFn: ({ id, data }: { id: string; data: ContractFormData }) => updateContract(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["contracts"] })
-      qc.invalidateQueries({ queryKey: ["categories"] })
+      qc.invalidateQueries({ queryKey: ["categories", "contracts"] })
       toast.success(t("contract.updated"))
       setEditingContract(null)
     },
@@ -44,7 +44,7 @@ function UpcomingRenewalsPage() {
     mutationFn: ({ id }: { id: string }) => deleteContract(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["contracts"] })
-      qc.invalidateQueries({ queryKey: ["categories"] })
+      qc.invalidateQueries({ queryKey: ["categories", "contracts"] })
       toast.success(t("contract.deleted"))
       setDeletingContract(null)
     },
@@ -63,14 +63,8 @@ function UpcomingRenewalsPage() {
   function getRowClass(c: Contract) {
     if (!c.cancellationDate) return undefined
     const days = differenceInDays(new Date(c.cancellationDate), new Date())
-    
-    // Very close/Urgent (<= 30 days) - Red
     if (days <= 30) return "bg-destructive/10 hover:bg-destructive/20"
-    
-    // Approaching (<= 90 days) - Yellow
     if (days <= 90) return "bg-yellow-500/10 hover:bg-yellow-500/20"
-    
-    // Far off (> 90 days) - Greyed out / less prominent
     return "text-muted-foreground opacity-75"
   }
 

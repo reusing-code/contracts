@@ -31,11 +31,14 @@ func setupServer(t *testing.T) *httptest.Server {
 	h := handler.New(s, logger, testJWTSecret, nil)
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /api/v1/categories", h.ListCategories)
-	mux.HandleFunc("POST /api/v1/categories", h.CreateCategory)
-	mux.HandleFunc("GET /api/v1/categories/{id}", h.GetCategory)
-	mux.HandleFunc("PUT /api/v1/categories/{id}", h.UpdateCategory)
-	mux.HandleFunc("DELETE /api/v1/categories/{id}", h.DeleteCategory)
+	// Module-scoped category routes
+	mux.HandleFunc("GET /api/v1/modules/{module}/categories", h.ListCategories)
+	mux.HandleFunc("POST /api/v1/modules/{module}/categories", h.CreateCategory)
+	mux.HandleFunc("GET /api/v1/modules/{module}/categories/{id}", h.GetCategory)
+	mux.HandleFunc("PUT /api/v1/modules/{module}/categories/{id}", h.UpdateCategory)
+	mux.HandleFunc("DELETE /api/v1/modules/{module}/categories/{id}", h.DeleteCategory)
+
+	// Contract routes
 	mux.HandleFunc("GET /api/v1/categories/{id}/contracts", h.ListContractsByCategory)
 	mux.HandleFunc("POST /api/v1/categories/{id}/contracts", h.CreateContractInCategory)
 	mux.HandleFunc("GET /api/v1/contracts/upcoming-renewals", h.UpcomingRenewals)
@@ -44,6 +47,15 @@ func setupServer(t *testing.T) *httptest.Server {
 	mux.HandleFunc("PUT /api/v1/contracts/{id}", h.UpdateContract)
 	mux.HandleFunc("DELETE /api/v1/contracts/{id}", h.DeleteContract)
 	mux.HandleFunc("GET /api/v1/summary", h.Summary)
+
+	// Purchase routes
+	mux.HandleFunc("GET /api/v1/categories/{id}/purchases", h.ListPurchasesByCategory)
+	mux.HandleFunc("POST /api/v1/categories/{id}/purchases", h.CreatePurchaseInCategory)
+	mux.HandleFunc("GET /api/v1/purchases/summary", h.PurchaseSummary)
+	mux.HandleFunc("GET /api/v1/purchases", h.ListPurchases)
+	mux.HandleFunc("GET /api/v1/purchases/{id}", h.GetPurchase)
+	mux.HandleFunc("PUT /api/v1/purchases/{id}", h.UpdatePurchase)
+	mux.HandleFunc("DELETE /api/v1/purchases/{id}", h.DeletePurchase)
 
 	// Inject test user into context (integration tests skip auth middleware)
 	wrapped := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +112,7 @@ func TestIntegration_FullCRUDFlow(t *testing.T) {
 	base := srv.URL
 
 	// List categories — empty
-	resp := doJSON(t, "GET", base+"/api/v1/categories", nil)
+	resp := doJSON(t, "GET", base+"/api/v1/modules/contracts/categories", nil)
 	expectStatus(t, resp, 200)
 	cats := decode[[]model.Category](t, resp)
 	if len(cats) != 0 {
@@ -108,7 +120,7 @@ func TestIntegration_FullCRUDFlow(t *testing.T) {
 	}
 
 	// Create category
-	resp = doJSON(t, "POST", base+"/api/v1/categories", map[string]string{"name": "Telecom"})
+	resp = doJSON(t, "POST", base+"/api/v1/modules/contracts/categories", map[string]string{"name": "Telecom"})
 	expectStatus(t, resp, 201)
 	cat := decode[model.Category](t, resp)
 	if cat.Name != "Telecom" {
@@ -116,7 +128,7 @@ func TestIntegration_FullCRUDFlow(t *testing.T) {
 	}
 
 	// Get category
-	resp = doJSON(t, "GET", base+"/api/v1/categories/"+cat.ID.String(), nil)
+	resp = doJSON(t, "GET", base+"/api/v1/modules/contracts/categories/"+cat.ID.String(), nil)
 	expectStatus(t, resp, 200)
 	got := decode[model.Category](t, resp)
 	if got.ID != cat.ID {
@@ -124,7 +136,7 @@ func TestIntegration_FullCRUDFlow(t *testing.T) {
 	}
 
 	// Update category
-	resp = doJSON(t, "PUT", base+"/api/v1/categories/"+cat.ID.String(), map[string]string{"name": "Telecommunications"})
+	resp = doJSON(t, "PUT", base+"/api/v1/modules/contracts/categories/"+cat.ID.String(), map[string]string{"name": "Telecommunications"})
 	expectStatus(t, resp, 200)
 	updated := decode[model.Category](t, resp)
 	if updated.Name != "Telecommunications" {
@@ -194,12 +206,12 @@ func TestIntegration_FullCRUDFlow(t *testing.T) {
 	resp.Body.Close()
 
 	// Delete category
-	resp = doJSON(t, "DELETE", base+"/api/v1/categories/"+cat.ID.String(), nil)
+	resp = doJSON(t, "DELETE", base+"/api/v1/modules/contracts/categories/"+cat.ID.String(), nil)
 	expectStatus(t, resp, 204)
 	resp.Body.Close()
 
 	// Verify category is gone
-	resp = doJSON(t, "GET", base+"/api/v1/categories/"+cat.ID.String(), nil)
+	resp = doJSON(t, "GET", base+"/api/v1/modules/contracts/categories/"+cat.ID.String(), nil)
 	expectStatus(t, resp, 404)
 	resp.Body.Close()
 }
@@ -210,7 +222,7 @@ func TestIntegration_CascadeDelete(t *testing.T) {
 	base := srv.URL
 
 	// Create category with two contracts
-	resp := doJSON(t, "POST", base+"/api/v1/categories", map[string]string{"name": "Insurance"})
+	resp := doJSON(t, "POST", base+"/api/v1/modules/contracts/categories", map[string]string{"name": "Insurance"})
 	expectStatus(t, resp, 201)
 	cat := decode[model.Category](t, resp)
 
@@ -225,7 +237,7 @@ func TestIntegration_CascadeDelete(t *testing.T) {
 	con2 := decode[model.Contract](t, resp)
 
 	// Delete category — contracts should cascade
-	resp = doJSON(t, "DELETE", base+"/api/v1/categories/"+cat.ID.String(), nil)
+	resp = doJSON(t, "DELETE", base+"/api/v1/modules/contracts/categories/"+cat.ID.String(), nil)
 	expectStatus(t, resp, 204)
 	resp.Body.Close()
 
@@ -250,7 +262,7 @@ func TestIntegration_Summary(t *testing.T) {
 	}
 
 	// Create category + contract with price
-	resp = doJSON(t, "POST", base+"/api/v1/categories", map[string]string{"name": "Insurance"})
+	resp = doJSON(t, "POST", base+"/api/v1/modules/contracts/categories", map[string]string{"name": "Insurance"})
 	expectStatus(t, resp, 201)
 	cat := decode[model.Category](t, resp)
 
@@ -295,7 +307,7 @@ func TestIntegration_UpcomingRenewals(t *testing.T) {
 	}
 
 	// Create category + contract (no endDate, so it gets a cancellation date)
-	resp = doJSON(t, "POST", base+"/api/v1/categories", map[string]string{"name": "Telecom"})
+	resp = doJSON(t, "POST", base+"/api/v1/modules/contracts/categories", map[string]string{"name": "Telecom"})
 	expectStatus(t, resp, 201)
 	cat := decode[model.Category](t, resp)
 
@@ -332,7 +344,7 @@ func TestIntegration_ContractResponse_HasComputedFields(t *testing.T) {
 	base := srv.URL
 
 	// Create category + contract
-	resp := doJSON(t, "POST", base+"/api/v1/categories", map[string]string{"name": "Test"})
+	resp := doJSON(t, "POST", base+"/api/v1/modules/contracts/categories", map[string]string{"name": "Test"})
 	expectStatus(t, resp, 201)
 	cat := decode[model.Category](t, resp)
 

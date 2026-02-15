@@ -49,11 +49,15 @@ func (s *Server) Run() error {
 
 	// Protected API routes (require auth)
 	apiMux := http.NewServeMux()
-	apiMux.HandleFunc("GET /api/v1/categories", h.ListCategories)
-	apiMux.HandleFunc("POST /api/v1/categories", h.CreateCategory)
-	apiMux.HandleFunc("GET /api/v1/categories/{id}", h.GetCategory)
-	apiMux.HandleFunc("PUT /api/v1/categories/{id}", h.UpdateCategory)
-	apiMux.HandleFunc("DELETE /api/v1/categories/{id}", h.DeleteCategory)
+
+	// Module-scoped category routes
+	apiMux.HandleFunc("GET /api/v1/modules/{module}/categories", h.ListCategories)
+	apiMux.HandleFunc("POST /api/v1/modules/{module}/categories", h.CreateCategory)
+	apiMux.HandleFunc("GET /api/v1/modules/{module}/categories/{id}", h.GetCategory)
+	apiMux.HandleFunc("PUT /api/v1/modules/{module}/categories/{id}", h.UpdateCategory)
+	apiMux.HandleFunc("DELETE /api/v1/modules/{module}/categories/{id}", h.DeleteCategory)
+
+	// Contract routes
 	apiMux.HandleFunc("GET /api/v1/categories/{id}/contracts", h.ListContractsByCategory)
 	apiMux.HandleFunc("POST /api/v1/categories/{id}/contracts", h.CreateContractInCategory)
 	apiMux.HandleFunc("POST /api/v1/contracts/import", h.ImportContracts)
@@ -63,6 +67,17 @@ func (s *Server) Run() error {
 	apiMux.HandleFunc("PUT /api/v1/contracts/{id}", h.UpdateContract)
 	apiMux.HandleFunc("DELETE /api/v1/contracts/{id}", h.DeleteContract)
 	apiMux.HandleFunc("GET /api/v1/summary", h.Summary)
+
+	// Purchase routes
+	apiMux.HandleFunc("GET /api/v1/categories/{id}/purchases", h.ListPurchasesByCategory)
+	apiMux.HandleFunc("POST /api/v1/categories/{id}/purchases", h.CreatePurchaseInCategory)
+	apiMux.HandleFunc("GET /api/v1/purchases/summary", h.PurchaseSummary)
+	apiMux.HandleFunc("GET /api/v1/purchases", h.ListPurchases)
+	apiMux.HandleFunc("GET /api/v1/purchases/{id}", h.GetPurchase)
+	apiMux.HandleFunc("PUT /api/v1/purchases/{id}", h.UpdatePurchase)
+	apiMux.HandleFunc("DELETE /api/v1/purchases/{id}", h.DeletePurchase)
+
+	// Settings routes
 	apiMux.HandleFunc("GET /api/v1/settings", h.GetSettings)
 	apiMux.HandleFunc("PUT /api/v1/settings", h.UpdateSettings)
 	apiMux.HandleFunc("PUT /api/v1/settings/password", h.ChangePassword)

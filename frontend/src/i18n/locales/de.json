@@ -2,11 +2,24 @@
   "app": {
     "title": "Verträge"
   },
+  "home": {
+    "title": "Übersicht",
+    "activeContracts": "Aktive Verträge",
+    "monthlySpend": "Monatliche Kosten",
+    "totalPurchases": "Anschaffungen gesamt",
+    "totalSpent": "Ausgaben gesamt",
+    "quickStats": "Kurzübersicht",
+    "yearlyContracts": "Jährliche Verträge",
+    "categories": "Kategorien"
+  },
   "nav": {
     "dashboard": "Dashboard",
+    "contracts": "Verträge",
+    "purchases": "Anschaffungen",
     "upcomingRenewals": "Anstehende Verlängerungen",
     "settings": "Einstellungen",
     "categories": "Kategorien",
+    "general": "Allgemein",
     "language": "Sprache",
     "en": "English",
     "de": "Deutsch"
@@ -24,7 +37,7 @@
     "create": "Kategorie erstellen",
     "edit": "Kategorie bearbeiten",
     "delete": "Kategorie löschen",
-    "deleteConfirm": "Die Kategorie \"{{name}}\" und alle zugehörigen Verträge werden unwiderruflich gelöscht.",
+    "deleteConfirm": "Die Kategorie \"{{name}}\" und alle zugehörigen Einträge werden unwiderruflich gelöscht.",
     "name": "Name",
     "namePlaceholder": "z.B. Versicherung",
     "created": "Kategorie erstellt.",
@@ -46,6 +59,20 @@
     "backToDashboard": "Dashboard",
     "links": "Links"
   },
+  "purchase": {
+    "create": "Anschaffung hinzufügen",
+    "edit": "Anschaffung bearbeiten",
+    "delete": "Anschaffung löschen",
+    "deleteConfirm": "Die Anschaffung \"{{name}}\" wird unwiderruflich gelöscht.",
+    "noPurchases": "Noch keine Anschaffungen in dieser Kategorie.",
+    "created": "Anschaffung erstellt.",
+    "updated": "Anschaffung aktualisiert.",
+    "deleted": "Anschaffung gelöscht.",
+    "links": "Links",
+    "purchaseCount_one": "{{count}} Anschaffung",
+    "purchaseCount_other": "{{count}} Anschaffungen",
+    "totalSpent": "Gesamt: {{amount}}"
+  },
   "fields": {
     "name": "Vertragsname",
     "productName": "Produkt",
@@ -66,10 +93,29 @@
     "paperlessUrl": "Paperless-URL",
     "comments": "Kommentare"
   },
+  "purchaseFields": {
+    "itemName": "Artikelname",
+    "type": "Typ",
+    "brand": "Marke",
+    "articleNumber": "Artikelnr.",
+    "dealer": "Händler",
+    "price": "Preis",
+    "purchaseDate": "Kaufdatum",
+    "descriptionUrl": "Produktseite-URL",
+    "invoiceUrl": "Rechnung-URL",
+    "handbookUrl": "Handbuch-URL",
+    "consumables": "Verbrauchsmaterial",
+    "comments": "Kommentare"
+  },
   "categoryNames": {
     "insurance": "Versicherung",
     "banking": "Banking / Portfolios",
-    "telecommunications": "Telekommunikation"
+    "telecommunications": "Telekommunikation",
+    "pcHardware": "PC-Hardware",
+    "entertainment": "Unterhaltung",
+    "kitchen": "Küche",
+    "tools": "Werkzeuge",
+    "household": "Haushalt"
   },
   "auth": {
     "login": "Anmelden",
