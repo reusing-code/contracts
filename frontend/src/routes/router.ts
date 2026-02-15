@@ -6,6 +6,8 @@ import { contractsCategoryRoute } from "./contracts.categories.$categoryId"
 import { contractsUpcomingRenewalsRoute } from "./contracts.upcoming-renewals"
 import { purchasesIndexRoute } from "./purchases.index"
 import { purchasesCategoryRoute } from "./purchases.categories.$categoryId"
+import { autoIndexRoute } from "./auto.index"
+import { autoVehicleDetailRoute } from "./auto.vehicles.$vehicleId"
 import { loginRoute } from "./login"
 import { settingsRoute } from "./settings"
 
@@ -16,6 +18,8 @@ const routeTree = rootRoute.addChildren([
   contractsUpcomingRenewalsRoute,
   purchasesIndexRoute,
   purchasesCategoryRoute,
+  autoIndexRoute,
+  autoVehicleDetailRoute,
   loginRoute,
   settingsRoute,
 ])

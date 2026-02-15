@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link, useMatchRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { useCategories } from "@/hooks/use-categories"
+import { useVehicles } from "@/hooks/use-vehicles"
 import { cn } from "@/lib/utils"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ChevronRight, Home } from "lucide-react"
@@ -59,6 +60,7 @@ export function Sidebar() {
   const { t } = useTranslation()
   const { data: contractCategories = [] } = useCategories("contracts")
   const { data: purchaseCategories = [] } = useCategories("purchases")
+  const { data: vehicles = [] } = useVehicles()
   const matchRoute = useMatchRoute()
 
   return (
@@ -124,6 +126,32 @@ export function Sidebar() {
                 )}
               >
                 {category.nameKey ? t(category.nameKey) : category.name}
+              </Link>
+            )
+          })}
+        </SidebarSection>
+
+        <SidebarSection
+          title={t("nav.auto")}
+          to="/auto"
+          isActive={!!matchRoute({ to: "/auto", fuzzy: true })}
+        >
+          {vehicles.map((vehicle) => {
+            const active = matchRoute({
+              to: "/auto/vehicles/$vehicleId",
+              params: { vehicleId: vehicle.id },
+            })
+            return (
+              <Link
+                key={vehicle.id}
+                to="/auto/vehicles/$vehicleId"
+                params={{ vehicleId: vehicle.id }}
+                className={cn(
+                  "rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent",
+                  active && "bg-accent font-medium",
+                )}
+              >
+                {vehicle.name}
               </Link>
             )
           })}

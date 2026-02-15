@@ -78,6 +78,19 @@ func (s *Server) Run() error {
 	apiMux.HandleFunc("PUT /api/v1/purchases/{id}", h.UpdatePurchase)
 	apiMux.HandleFunc("DELETE /api/v1/purchases/{id}", h.DeletePurchase)
 
+	// Vehicle routes
+	apiMux.HandleFunc("GET /api/v1/vehicles", h.ListVehicles)
+	apiMux.HandleFunc("POST /api/v1/vehicles", h.CreateVehicle)
+	apiMux.HandleFunc("GET /api/v1/vehicles/{id}", h.GetVehicle)
+	apiMux.HandleFunc("PUT /api/v1/vehicles/{id}", h.UpdateVehicle)
+	apiMux.HandleFunc("DELETE /api/v1/vehicles/{id}", h.DeleteVehicle)
+	apiMux.HandleFunc("GET /api/v1/vehicles/{id}/summary", h.VehicleSummary)
+	apiMux.HandleFunc("GET /api/v1/vehicles/{id}/costs", h.ListCostEntries)
+	apiMux.HandleFunc("POST /api/v1/vehicles/{id}/costs", h.CreateCostEntry)
+	apiMux.HandleFunc("GET /api/v1/costs/{id}", h.GetCostEntry)
+	apiMux.HandleFunc("PUT /api/v1/costs/{id}", h.UpdateCostEntry)
+	apiMux.HandleFunc("DELETE /api/v1/costs/{id}", h.DeleteCostEntry)
+
 	// Settings routes
 	apiMux.HandleFunc("GET /api/v1/settings", h.GetSettings)
 	apiMux.HandleFunc("PUT /api/v1/settings", h.UpdateSettings)

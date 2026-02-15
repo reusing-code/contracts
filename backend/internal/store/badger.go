@@ -801,3 +801,288 @@ func (s *BadgerStore) DeletePurchase(_ context.Context, userID string, id uuid.U
 		return txn.Delete(idxCatPurKey(userID, p.CategoryID, id))
 	})
 }
+
+// Vehicle key helpers
+// Key format: u/{userID}/veh/{vehicleID}
+
+func vehKey(userID string, id uuid.UUID) []byte {
+	return []byte(fmt.Sprintf("u/%s/veh/%s", userID, id))
+}
+
+func vehPrefix(userID string) []byte {
+	return []byte(fmt.Sprintf("u/%s/veh/", userID))
+}
+
+// Cost entry key helpers
+// Key format: u/{userID}/cost/{costEntryID}
+// Index: u/{userID}/idx/veh_cost/{vehicleID}/{costEntryID}
+
+func costKey(userID string, id uuid.UUID) []byte {
+	return []byte(fmt.Sprintf("u/%s/cost/%s", userID, id))
+}
+
+func costPrefix(userID string) []byte {
+	return []byte(fmt.Sprintf("u/%s/cost/", userID))
+}
+
+func idxVehCostKey(userID string, vehicleID, costID uuid.UUID) []byte {
+	return []byte(fmt.Sprintf("u/%s/idx/veh_cost/%s/%s", userID, vehicleID, costID))
+}
+
+func idxVehCostPrefix(userID string, vehicleID uuid.UUID) []byte {
+	return []byte(fmt.Sprintf("u/%s/idx/veh_cost/%s/", userID, vehicleID))
+}
+
+// Vehicles
+
+func (s *BadgerStore) ListVehicles(_ context.Context, userID string) ([]model.Vehicle, error) {
+	var vehicles []model.Vehicle
+	prefix := vehPrefix(userID)
+
+	err := s.db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			var v model.Vehicle
+			if err := it.Item().Value(func(val []byte) error {
+				return json.Unmarshal(val, &v)
+			}); err != nil {
+				return err
+			}
+			vehicles = append(vehicles, v)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if vehicles == nil {
+		vehicles = []model.Vehicle{}
+	}
+	return vehicles, nil
+}
+
+func (s *BadgerStore) GetVehicle(_ context.Context, userID string, id uuid.UUID) (model.Vehicle, error) {
+	var v model.Vehicle
+	err := s.db.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(vehKey(userID, id))
+		if err != nil {
+			return err
+		}
+		return item.Value(func(val []byte) error {
+			return json.Unmarshal(val, &v)
+		})
+	})
+	if errors.Is(err, badger.ErrKeyNotFound) {
+		return v, ErrNotFound
+	}
+	return v, err
+}
+
+func (s *BadgerStore) CreateVehicle(_ context.Context, userID string, v model.Vehicle) error {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	return s.db.Update(func(txn *badger.Txn) error {
+		return txn.Set(vehKey(userID, v.ID), data)
+	})
+}
+
+func (s *BadgerStore) UpdateVehicle(_ context.Context, userID string, v model.Vehicle) error {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	return s.db.Update(func(txn *badger.Txn) error {
+		if _, err := txn.Get(vehKey(userID, v.ID)); err != nil {
+			if errors.Is(err, badger.ErrKeyNotFound) {
+				return ErrNotFound
+			}
+			return err
+		}
+		return txn.Set(vehKey(userID, v.ID), data)
+	})
+}
+
+func (s *BadgerStore) DeleteVehicle(_ context.Context, userID string, id uuid.UUID) error {
+	return s.db.Update(func(txn *badger.Txn) error {
+		if _, err := txn.Get(vehKey(userID, id)); err != nil {
+			if errors.Is(err, badger.ErrKeyNotFound) {
+				return ErrNotFound
+			}
+			return err
+		}
+
+		if err := txn.Delete(vehKey(userID, id)); err != nil {
+			return err
+		}
+
+		// Cascade delete all cost entries for this vehicle
+		idxPrefix := idxVehCostPrefix(userID, id)
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+
+		var costIDs []uuid.UUID
+		for it.Seek(idxPrefix); it.ValidForPrefix(idxPrefix); it.Next() {
+			key := it.Item().Key()
+			cIDStr := string(key[len(idxPrefix):])
+			cID, err := uuid.Parse(cIDStr)
+			if err != nil {
+				continue
+			}
+			costIDs = append(costIDs, cID)
+		}
+		it.Close()
+
+		for _, cID := range costIDs {
+			if err := txn.Delete(costKey(userID, cID)); err != nil {
+				return err
+			}
+			if err := txn.Delete(idxVehCostKey(userID, id, cID)); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+// Cost Entries
+
+func (s *BadgerStore) ListCostEntries(_ context.Context, userID string, vehicleID uuid.UUID) ([]model.CostEntry, error) {
+	var entries []model.CostEntry
+	prefix := idxVehCostPrefix(userID, vehicleID)
+
+	err := s.db.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = false
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			key := it.Item().Key()
+			cIDStr := string(key[len(prefix):])
+			cID, err := uuid.Parse(cIDStr)
+			if err != nil {
+				continue
+			}
+
+			item, err := txn.Get(costKey(userID, cID))
+			if err != nil {
+				if errors.Is(err, badger.ErrKeyNotFound) {
+					continue
+				}
+				return err
+			}
+
+			var c model.CostEntry
+			if err := item.Value(func(val []byte) error {
+				return json.Unmarshal(val, &c)
+			}); err != nil {
+				return err
+			}
+			entries = append(entries, c)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if entries == nil {
+		entries = []model.CostEntry{}
+	}
+	return entries, nil
+}
+
+func (s *BadgerStore) GetCostEntry(_ context.Context, userID string, id uuid.UUID) (model.CostEntry, error) {
+	var c model.CostEntry
+	err := s.db.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(costKey(userID, id))
+		if err != nil {
+			return err
+		}
+		return item.Value(func(val []byte) error {
+			return json.Unmarshal(val, &c)
+		})
+	})
+	if errors.Is(err, badger.ErrKeyNotFound) {
+		return c, ErrNotFound
+	}
+	return c, err
+}
+
+func (s *BadgerStore) CreateCostEntry(_ context.Context, userID string, c model.CostEntry) error {
+	data, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+	return s.db.Update(func(txn *badger.Txn) error {
+		if err := txn.Set(costKey(userID, c.ID), data); err != nil {
+			return err
+		}
+		return txn.Set(idxVehCostKey(userID, c.VehicleID, c.ID), []byte{})
+	})
+}
+
+func (s *BadgerStore) UpdateCostEntry(_ context.Context, userID string, c model.CostEntry) error {
+	data, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+	return s.db.Update(func(txn *badger.Txn) error {
+		item, err := txn.Get(costKey(userID, c.ID))
+		if err != nil {
+			if errors.Is(err, badger.ErrKeyNotFound) {
+				return ErrNotFound
+			}
+			return err
+		}
+
+		var old model.CostEntry
+		if err := item.Value(func(val []byte) error {
+			return json.Unmarshal(val, &old)
+		}); err != nil {
+			return err
+		}
+
+		if err := txn.Set(costKey(userID, c.ID), data); err != nil {
+			return err
+		}
+
+		if old.VehicleID != c.VehicleID {
+			if err := txn.Delete(idxVehCostKey(userID, old.VehicleID, c.ID)); err != nil {
+				return err
+			}
+			if err := txn.Set(idxVehCostKey(userID, c.VehicleID, c.ID), []byte{}); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func (s *BadgerStore) DeleteCostEntry(_ context.Context, userID string, id uuid.UUID) error {
+	return s.db.Update(func(txn *badger.Txn) error {
+		item, err := txn.Get(costKey(userID, id))
+		if err != nil {
+			if errors.Is(err, badger.ErrKeyNotFound) {
+				return ErrNotFound
+			}
+			return err
+		}
+
+		var c model.CostEntry
+		if err := item.Value(func(val []byte) error {
+			return json.Unmarshal(val, &c)
+		}); err != nil {
+			return err
+		}
+
+		if err := txn.Delete(costKey(userID, id)); err != nil {
+			return err
+		}
+		return txn.Delete(idxVehCostKey(userID, c.VehicleID, id))
+	})
+}

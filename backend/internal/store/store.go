@@ -37,5 +37,17 @@ type Store interface {
 	UpdatePurchase(ctx context.Context, userID string, p model.Purchase) error
 	DeletePurchase(ctx context.Context, userID string, id uuid.UUID) error
 
+	ListVehicles(ctx context.Context, userID string) ([]model.Vehicle, error)
+	GetVehicle(ctx context.Context, userID string, id uuid.UUID) (model.Vehicle, error)
+	CreateVehicle(ctx context.Context, userID string, v model.Vehicle) error
+	UpdateVehicle(ctx context.Context, userID string, v model.Vehicle) error
+	DeleteVehicle(ctx context.Context, userID string, id uuid.UUID) error
+
+	ListCostEntries(ctx context.Context, userID string, vehicleID uuid.UUID) ([]model.CostEntry, error)
+	GetCostEntry(ctx context.Context, userID string, id uuid.UUID) (model.CostEntry, error)
+	CreateCostEntry(ctx context.Context, userID string, c model.CostEntry) error
+	UpdateCostEntry(ctx context.Context, userID string, c model.CostEntry) error
+	DeleteCostEntry(ctx context.Context, userID string, id uuid.UUID) error
+
 	Close() error
 }
