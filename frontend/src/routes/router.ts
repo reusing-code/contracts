@@ -1,12 +1,24 @@
 import { createRouter } from "@tanstack/react-router"
 import { rootRoute } from "./__root"
 import { indexRoute } from "."
-import { categoryRoute } from "./categories.$categoryId"
+import { contractsIndexRoute } from "./contracts.index"
+import { contractsCategoryRoute } from "./contracts.categories.$categoryId"
+import { contractsUpcomingRenewalsRoute } from "./contracts.upcoming-renewals"
+import { purchasesIndexRoute } from "./purchases.index"
+import { purchasesCategoryRoute } from "./purchases.categories.$categoryId"
 import { loginRoute } from "./login"
-import { upcomingRenewalsRoute } from "./upcoming-renewals"
 import { settingsRoute } from "./settings"
 
-const routeTree = rootRoute.addChildren([indexRoute, categoryRoute, loginRoute, upcomingRenewalsRoute, settingsRoute])
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  contractsIndexRoute,
+  contractsCategoryRoute,
+  contractsUpcomingRenewalsRoute,
+  purchasesIndexRoute,
+  purchasesCategoryRoute,
+  loginRoute,
+  settingsRoute,
+])
 
 export const router = createRouter({ routeTree })
 

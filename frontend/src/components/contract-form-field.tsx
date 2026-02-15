@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next"
 import type { FieldConfig } from "@/config/contract-fields"
-import type { ContractFormData } from "@/types/contract"
-import type { Control } from "react-hook-form"
+import type { Control, FieldValues, Path } from "react-hook-form"
 import {
   FormControl,
   FormField,
@@ -19,18 +18,18 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-interface ContractFormFieldProps {
+interface FormFieldRendererProps<T extends FieldValues> {
   config: FieldConfig
-  control: Control<ContractFormData>
+  control: Control<T>
 }
 
-export function ContractFormField({ config, control }: ContractFormFieldProps) {
+export function FormFieldRenderer<T extends FieldValues>({ config, control }: FormFieldRendererProps<T>) {
   const { t } = useTranslation()
 
   return (
     <FormField
       control={control}
-      name={config.key as keyof ContractFormData}
+      name={config.key as Path<T>}
       render={({ field }) => (
         <FormItem>
           <FormLabel>
@@ -79,3 +78,6 @@ export function ContractFormField({ config, control }: ContractFormFieldProps) {
     />
   )
 }
+
+// Re-export for backward compatibility
+export const ContractFormField = FormFieldRenderer

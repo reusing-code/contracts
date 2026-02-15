@@ -13,8 +13,8 @@ import (
 )
 
 type mockStore struct {
-	users    []model.User
-	settings map[string]model.UserSettings
+	users     []model.User
+	settings  map[string]model.UserSettings
 	contracts map[string][]model.Contract
 }
 
@@ -40,15 +40,21 @@ func (m *mockStore) UpdateSettings(_ context.Context, userID string, s model.Use
 	m.settings[userID] = s
 	return nil
 }
-func (m *mockStore) ListCategories(_ context.Context, _ string) ([]model.Category, error) {
+func (m *mockStore) ListCategories(_ context.Context, _ string, _ string) ([]model.Category, error) {
 	return nil, nil
 }
-func (m *mockStore) GetCategory(_ context.Context, _ string, _ uuid.UUID) (model.Category, error) {
+func (m *mockStore) GetCategory(_ context.Context, _ string, _ string, _ uuid.UUID) (model.Category, error) {
 	return model.Category{}, nil
 }
-func (m *mockStore) CreateCategory(_ context.Context, _ string, _ model.Category) error { return nil }
-func (m *mockStore) UpdateCategory(_ context.Context, _ string, _ model.Category) error { return nil }
-func (m *mockStore) DeleteCategory(_ context.Context, _ string, _ uuid.UUID) error      { return nil }
+func (m *mockStore) CreateCategory(_ context.Context, _ string, _ string, _ model.Category) error {
+	return nil
+}
+func (m *mockStore) UpdateCategory(_ context.Context, _ string, _ string, _ model.Category) error {
+	return nil
+}
+func (m *mockStore) DeleteCategory(_ context.Context, _ string, _ string, _ uuid.UUID) error {
+	return nil
+}
 func (m *mockStore) ListContracts(_ context.Context, userID string) ([]model.Contract, error) {
 	return m.contracts[userID], nil
 }
@@ -61,6 +67,18 @@ func (m *mockStore) GetContract(_ context.Context, _ string, _ uuid.UUID) (model
 func (m *mockStore) CreateContract(_ context.Context, _ string, _ model.Contract) error { return nil }
 func (m *mockStore) UpdateContract(_ context.Context, _ string, _ model.Contract) error { return nil }
 func (m *mockStore) DeleteContract(_ context.Context, _ string, _ uuid.UUID) error      { return nil }
+func (m *mockStore) ListPurchases(_ context.Context, _ string) ([]model.Purchase, error) {
+	return nil, nil
+}
+func (m *mockStore) ListPurchasesByCategory(_ context.Context, _ string, _ uuid.UUID) ([]model.Purchase, error) {
+	return nil, nil
+}
+func (m *mockStore) GetPurchase(_ context.Context, _ string, _ uuid.UUID) (model.Purchase, error) {
+	return model.Purchase{}, nil
+}
+func (m *mockStore) CreatePurchase(_ context.Context, _ string, _ model.Purchase) error { return nil }
+func (m *mockStore) UpdatePurchase(_ context.Context, _ string, _ model.Purchase) error { return nil }
+func (m *mockStore) DeletePurchase(_ context.Context, _ string, _ uuid.UUID) error      { return nil }
 func (m *mockStore) Close() error                                                       { return nil }
 
 func newTestUser() model.User {

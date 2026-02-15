@@ -63,7 +63,7 @@ func (h *Handler) ImportContracts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	categories, err := h.store.ListCategories(r.Context(), userID)
+	categories, err := h.store.ListCategories(r.Context(), userID, "contracts")
 	if err != nil {
 		h.handleStoreError(w, err)
 		return
@@ -109,7 +109,7 @@ func (h *Handler) ImportContracts(w http.ResponseWriter, r *http.Request) {
 				CreatedAt: now,
 				UpdatedAt: now,
 			}
-			if err := h.store.CreateCategory(r.Context(), userID, cat); err != nil {
+			if err := h.store.CreateCategory(r.Context(), userID, "contracts", cat); err != nil {
 				result.Errors = append(result.Errors, importError{Row: row, Error: fmt.Sprintf("failed to create category: %v", err)})
 				continue
 			}

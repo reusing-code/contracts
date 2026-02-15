@@ -10,7 +10,8 @@ import (
 )
 
 func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
-	categories, err := h.store.ListCategories(r.Context(), middleware.GetUserID(r.Context()))
+	module := r.PathValue("module")
+	categories, err := h.store.ListCategories(r.Context(), middleware.GetUserID(r.Context()), module)
 	if err != nil {
 		h.handleStoreError(w, err)
 		return
@@ -19,13 +20,14 @@ func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
+	module := r.PathValue("module")
 	id, err := parseUUID(r.PathValue("id"))
 	if err != nil {
 		h.errorResponse(w, http.StatusBadRequest, "invalid id")
 		return
 	}
 
-	cat, err := h.store.GetCategory(r.Context(), middleware.GetUserID(r.Context()), id)
+	cat, err := h.store.GetCategory(r.Context(), middleware.GetUserID(r.Context()), module, id)
 	if err != nil {
 		h.handleStoreError(w, err)
 		return
@@ -34,6 +36,7 @@ func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
+	module := r.PathValue("module")
 	var input model.CategoryInput
 	if err := h.readJSON(r, &input); err != nil {
 		h.errorResponse(w, http.StatusBadRequest, "invalid request body")
@@ -52,7 +55,7 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt: now,
 	}
 
-	if err := h.store.CreateCategory(r.Context(), middleware.GetUserID(r.Context()), cat); err != nil {
+	if err := h.store.CreateCategory(r.Context(), middleware.GetUserID(r.Context()), module, cat); err != nil {
 		h.handleStoreError(w, err)
 		return
 	}
@@ -60,13 +63,14 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
+	module := r.PathValue("module")
 	id, err := parseUUID(r.PathValue("id"))
 	if err != nil {
 		h.errorResponse(w, http.StatusBadRequest, "invalid id")
 		return
 	}
 
-	existing, err := h.store.GetCategory(r.Context(), middleware.GetUserID(r.Context()), id)
+	existing, err := h.store.GetCategory(r.Context(), middleware.GetUserID(r.Context()), module, id)
 	if err != nil {
 		h.handleStoreError(w, err)
 		return
@@ -85,7 +89,7 @@ func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 	existing.Name = input.Name
 	existing.UpdatedAt = time.Now().UTC()
 
-	if err := h.store.UpdateCategory(r.Context(), middleware.GetUserID(r.Context()), existing); err != nil {
+	if err := h.store.UpdateCategory(r.Context(), middleware.GetUserID(r.Context()), module, existing); err != nil {
 		h.handleStoreError(w, err)
 		return
 	}
@@ -93,13 +97,14 @@ func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
+	module := r.PathValue("module")
 	id, err := parseUUID(r.PathValue("id"))
 	if err != nil {
 		h.errorResponse(w, http.StatusBadRequest, "invalid id")
 		return
 	}
 
-	if err := h.store.DeleteCategory(r.Context(), middleware.GetUserID(r.Context()), id); err != nil {
+	if err := h.store.DeleteCategory(r.Context(), middleware.GetUserID(r.Context()), module, id); err != nil {
 		h.handleStoreError(w, err)
 		return
 	}

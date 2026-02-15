@@ -31,7 +31,8 @@ export function useCreateContract(categoryId: string) {
     mutationFn: (data: ContractFormData) => createContract(categoryId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: contractsKey(categoryId) })
-      qc.invalidateQueries({ queryKey: ["categories"] })
+      qc.invalidateQueries({ queryKey: ["categories", "contracts"] })
+      qc.invalidateQueries({ queryKey: ["summary"] })
     },
   })
 }
@@ -42,7 +43,8 @@ export function useUpdateContract(categoryId: string) {
     mutationFn: ({ id, data }: { id: string; data: ContractFormData }) => updateContract(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: contractsKey(categoryId) })
-      qc.invalidateQueries({ queryKey: ["categories"] })
+      qc.invalidateQueries({ queryKey: ["categories", "contracts"] })
+      qc.invalidateQueries({ queryKey: ["summary"] })
     },
   })
 }
@@ -53,7 +55,8 @@ export function useDeleteContract(categoryId: string) {
     mutationFn: (id: string) => deleteContract(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: contractsKey(categoryId) })
-      qc.invalidateQueries({ queryKey: ["categories"] })
+      qc.invalidateQueries({ queryKey: ["categories", "contracts"] })
+      qc.invalidateQueries({ queryKey: ["summary"] })
     },
   })
 }
@@ -64,7 +67,7 @@ export function useImportContracts() {
     mutationFn: (file: File) => importContracts(file),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["contracts"] })
-      qc.invalidateQueries({ queryKey: ["categories"] })
+      qc.invalidateQueries({ queryKey: ["categories", "contracts"] })
       qc.invalidateQueries({ queryKey: ["summary"] })
     },
   })

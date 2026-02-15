@@ -14,18 +14,18 @@ import { ContractsTable } from "@/components/contracts-table"
 import { ContractDialog } from "@/components/contract-dialog"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
-export const categoryRoute = createRoute({
+export const contractsCategoryRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/categories/$categoryId",
-  component: CategoryDetailPage,
+  path: "/contracts/categories/$categoryId",
+  component: ContractsCategoryDetailPage,
 })
 
-function CategoryDetailPage() {
+function ContractsCategoryDetailPage() {
   const { t } = useTranslation()
-  const { categoryId } = categoryRoute.useParams()
+  const { categoryId } = contractsCategoryRoute.useParams()
   const { data: category } = useQuery({
-    queryKey: ["category", categoryId],
-    queryFn: () => getCategoryById(categoryId),
+    queryKey: ["category", "contracts", categoryId],
+    queryFn: () => getCategoryById("contracts", categoryId),
   })
   const categoryName = category ? (category.nameKey ? t(category.nameKey) : category.name) : t("nav.categories")
   usePageTitle(categoryName, t("app.title"))

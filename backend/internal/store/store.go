@@ -17,11 +17,11 @@ type Store interface {
 	GetSettings(ctx context.Context, userID string) (model.UserSettings, error)
 	UpdateSettings(ctx context.Context, userID string, s model.UserSettings) error
 
-	ListCategories(ctx context.Context, userID string) ([]model.Category, error)
-	GetCategory(ctx context.Context, userID string, id uuid.UUID) (model.Category, error)
-	CreateCategory(ctx context.Context, userID string, c model.Category) error
-	UpdateCategory(ctx context.Context, userID string, c model.Category) error
-	DeleteCategory(ctx context.Context, userID string, id uuid.UUID) error
+	ListCategories(ctx context.Context, userID string, module string) ([]model.Category, error)
+	GetCategory(ctx context.Context, userID string, module string, id uuid.UUID) (model.Category, error)
+	CreateCategory(ctx context.Context, userID string, module string, c model.Category) error
+	UpdateCategory(ctx context.Context, userID string, module string, c model.Category) error
+	DeleteCategory(ctx context.Context, userID string, module string, id uuid.UUID) error
 
 	ListContracts(ctx context.Context, userID string) ([]model.Contract, error)
 	ListContractsByCategory(ctx context.Context, userID string, categoryID uuid.UUID) ([]model.Contract, error)
@@ -29,6 +29,13 @@ type Store interface {
 	CreateContract(ctx context.Context, userID string, c model.Contract) error
 	UpdateContract(ctx context.Context, userID string, c model.Contract) error
 	DeleteContract(ctx context.Context, userID string, id uuid.UUID) error
+
+	ListPurchases(ctx context.Context, userID string) ([]model.Purchase, error)
+	ListPurchasesByCategory(ctx context.Context, userID string, categoryID uuid.UUID) ([]model.Purchase, error)
+	GetPurchase(ctx context.Context, userID string, id uuid.UUID) (model.Purchase, error)
+	CreatePurchase(ctx context.Context, userID string, p model.Purchase) error
+	UpdatePurchase(ctx context.Context, userID string, p model.Purchase) error
+	DeletePurchase(ctx context.Context, userID string, id uuid.UUID) error
 
 	Close() error
 }
