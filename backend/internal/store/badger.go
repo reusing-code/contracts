@@ -821,10 +821,6 @@ func costKey(userID string, id uuid.UUID) []byte {
 	return []byte(fmt.Sprintf("u/%s/cost/%s", userID, id))
 }
 
-func costPrefix(userID string) []byte {
-	return []byte(fmt.Sprintf("u/%s/cost/", userID))
-}
-
 func idxVehCostKey(userID string, vehicleID, costID uuid.UUID) []byte {
 	return []byte(fmt.Sprintf("u/%s/idx/veh_cost/%s/%s", userID, vehicleID, costID))
 }
