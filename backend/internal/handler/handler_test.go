@@ -210,6 +210,26 @@ func (m *mockStore) CreatePurchase(_ context.Context, _ string, _ model.Purchase
 func (m *mockStore) UpdatePurchase(_ context.Context, _ string, _ model.Purchase) error { return nil }
 func (m *mockStore) DeletePurchase(_ context.Context, _ string, _ uuid.UUID) error      { return nil }
 
+func (m *mockStore) ListVehicles(_ context.Context, _ string) ([]model.Vehicle, error) {
+	return nil, nil
+}
+func (m *mockStore) GetVehicle(_ context.Context, _ string, _ uuid.UUID) (model.Vehicle, error) {
+	return model.Vehicle{}, store.ErrNotFound
+}
+func (m *mockStore) CreateVehicle(_ context.Context, _ string, _ model.Vehicle) error { return nil }
+func (m *mockStore) UpdateVehicle(_ context.Context, _ string, _ model.Vehicle) error { return nil }
+func (m *mockStore) DeleteVehicle(_ context.Context, _ string, _ uuid.UUID) error     { return nil }
+
+func (m *mockStore) ListCostEntries(_ context.Context, _ string, _ uuid.UUID) ([]model.CostEntry, error) {
+	return nil, nil
+}
+func (m *mockStore) GetCostEntry(_ context.Context, _ string, _ uuid.UUID) (model.CostEntry, error) {
+	return model.CostEntry{}, store.ErrNotFound
+}
+func (m *mockStore) CreateCostEntry(_ context.Context, _ string, _ model.CostEntry) error { return nil }
+func (m *mockStore) UpdateCostEntry(_ context.Context, _ string, _ model.CostEntry) error { return nil }
+func (m *mockStore) DeleteCostEntry(_ context.Context, _ string, _ uuid.UUID) error       { return nil }
+
 var testJWTSecret = []byte("test-secret-key")
 
 const testUserID = "00000000-0000-0000-0000-000000000001"
