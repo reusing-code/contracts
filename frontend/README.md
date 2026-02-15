@@ -1,6 +1,6 @@
 # Contracts — Frontend
 
-React SPA for the Contracts application.
+React SPA for the Contracts application — a multi-module personal finance manager.
 
 ## Tech Stack
 
@@ -9,6 +9,7 @@ React SPA for the Contracts application.
 - **TanStack Router** for type-safe routing
 - **TanStack Query** for server state / data fetching
 - **React Hook Form** + **Zod** for forms and validation
+- **react-i18next** for internationalization (en/de)
 
 ## Getting Started
 
@@ -43,11 +44,13 @@ Browse available components at [ui.shadcn.com](https://ui.shadcn.com).
 
 ```
 src/
-  routes/        Route definitions (pages)
+  routes/        Route definitions (homepage, contracts/*, purchases/*)
   components/    React components (ui/ for shadcn)
-  lib/           Utilities, API client
-  hooks/         Custom React hooks
+  lib/           Utilities, API client, per-module repositories
+  hooks/         Custom React hooks (categories, contracts, purchases)
   types/         Shared TypeScript types
+  config/        Field configurations for forms/tables
+  i18n/          Internationalization (en.json, de.json)
 ```
 
 The `@/` import alias maps to `src/`.

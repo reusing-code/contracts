@@ -20,7 +20,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Go 1.22+ stdlib `net/http` with method+pattern routing. Single binary that optionally serves the frontend SPA.
 
-**Storage:** BadgerDB (embedded LSM-tree KV store). Data stored as JSON documents with key prefixes for multi-user namespacing: `u/{userId}/cat/{id}`, `u/{userId}/con/{id}`, `u/{userId}/idx/cat_con/{catId}/{conId}`.
+**Storage:** BadgerDB (embedded LSM-tree KV store). Data stored as JSON documents with module-scoped key prefixes for multi-user namespacing:
+
+- Contract categories: `u/{userId}/mod/contracts/cat/{categoryId}`
+- Purchase categories: `u/{userId}/mod/purchases/cat/{categoryId}`
+- Contracts: `u/{userId}/con/{contractId}`
+- Contract category index: `u/{userId}/idx/cat_con/{catId}/{conId}`
+- Purchases: `u/{userId}/pur/{purchaseId}`
+- Purchase category index: `u/{userId}/idx/cat_pur/{catId}/{purId}`
+- Schema version: `_meta/schema_version` (current: 2)
+
+**Migrations:** Version-based schema migrations in `internal/store/migration/`. V1 renamed `pricePerMonth` → `price`. V2 moved category keys from `u/{userId}/cat/{id}` to module-scoped `u/{userId}/mod/{module}/cat/{id}`.
 
 **Config:** Environment variables via `caarlos0/env` struct tags. See `.env.example` for all options.
 
@@ -30,26 +40,35 @@ Go 1.22+ stdlib `net/http` with method+pattern routing. Single binary that optio
 
 **Middleware chain (outermost first):** RequestID → Recovery → Metrics → Logging → CORS → handler.
 
-**Auth:** Not yet implemented. All requests use a hardcoded default user ID. The store interface accepts `userID` as a parameter so handlers can pass it from auth context later without store changes.
+**Auth:** JWT-based authentication. Registration and login seed default categories for both modules. The store interface accepts `userID` as a parameter; handlers extract it from auth context.
 
 ## Key directories
 
 - `cmd/server/` — Entrypoint
 - `internal/config/` — Environment-based configuration
-- `internal/model/` — Category and Contract types (JSON tags match frontend Zod schemas)
+- `internal/model/` — Category, Contract, and Purchase types (JSON tags match frontend Zod schemas)
 - `internal/store/` — Store interface + BadgerDB implementation
-- `internal/handler/` — HTTP handlers (health, category CRUD, contract CRUD)
-- `internal/middleware/` — Request ID, recovery, metrics, logging, CORS
+- `internal/store/migration/` — Schema migration registry and versioned migrations
+- `internal/handler/` — HTTP handlers (auth, category CRUD, contract CRUD, purchase CRUD, summaries, import)
+- `internal/middleware/` — Request ID, recovery, metrics, logging, CORS, auth
 - `internal/server/` — Mux setup, middleware wiring, graceful shutdown, SPA serving
+- `internal/reminder/` — Email reminder scheduler for contract renewals
+- `internal/version/` — Build version info
 
 ## API
 
 All endpoints under `/api/v1/`. JSON request/response with camelCase field names.
 
-- `GET|POST /api/v1/categories` — List/create categories
-- `GET|PUT|DELETE /api/v1/categories/{id}` — Get/update/delete category (delete cascades to contracts)
+- `GET|POST /api/v1/modules/{module}/categories` — List/create categories (module: `contracts` or `purchases`)
+- `GET|PUT|DELETE /api/v1/modules/{module}/categories/{id}` — Get/update/delete category (delete cascades to module items)
 - `GET|POST /api/v1/categories/{id}/contracts` — List/create contracts in category
 - `GET|PUT|DELETE /api/v1/contracts/{id}` — Get/update/delete contract
+- `GET /api/v1/contracts/upcoming-renewals` — Upcoming renewals
+- `POST /api/v1/contracts/import` — Batch JSON import
+- `GET /api/v1/summary` — Contract dashboard stats
+- `GET|POST /api/v1/categories/{id}/purchases` — List/create purchases in category
+- `GET|PUT|DELETE /api/v1/purchases/{id}` — Get/update/delete purchase
+- `GET /api/v1/purchases/summary` — Purchase spending stats
 - `GET /healthz` — Liveness probe
 - `GET /readyz` — Readiness probe (checks DB)
 - `GET /metrics` — Prometheus metrics

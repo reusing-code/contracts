@@ -1,12 +1,15 @@
 # Contracts
 
-A self-hosted contract management application for tracking subscriptions, renewals, and recurring expenses. Built with a Go backend and React frontend.
+A self-hosted personal finance manager for tracking contracts, subscriptions, and purchases. Built with a Go backend and React frontend.
 
 ## Features
 
+- **Modular design** — Separate modules for contracts and purchases, each with independent categories and dashboards
 - **Contract tracking** — Store contract details including dates, pricing, notice periods, and renewal terms
-- **Category organization** — Group contracts by category (insurance, telecom, etc.)
-- **Renewal monitoring** — Dashboard showing upcoming renewals with color-coded urgency indicators
+- **Purchase tracking** — Track one-time purchases with item details, pricing, dealer info, and document links
+- **Category organization** — Per-module categories (e.g. insurance/telecom for contracts, PC hardware/tools for purchases)
+- **Homepage overview** — Dashboard at `/` with summary cards and stats across all modules
+- **Renewal monitoring** — Upcoming renewals with color-coded urgency indicators
 - **Email reminders** — Configurable SMTP-based reminder emails for approaching renewals
 - **Batch import** — Import contracts from JSON via file upload or paste
 - **Multi-user** — JWT authentication with per-user data isolation
@@ -64,16 +67,20 @@ All endpoints under `/api/v1/`. Auth endpoints are public; everything else requi
 |--------|------|-------------|
 | POST | `/auth/register` | Register user |
 | POST | `/auth/login` | Login (returns JWT) |
-| GET/POST | `/categories` | List / create categories |
-| GET/PUT/DELETE | `/categories/{id}` | Category CRUD |
+| GET/POST | `/modules/{module}/categories` | List / create categories (module: `contracts` or `purchases`) |
+| GET/PUT/DELETE | `/modules/{module}/categories/{id}` | Category CRUD (cascade deletes items) |
 | GET/POST | `/categories/{id}/contracts` | Contracts in category |
 | GET | `/contracts` | List all contracts |
 | GET/PUT/DELETE | `/contracts/{id}` | Contract CRUD |
 | GET | `/contracts/upcoming-renewals` | Renewals by date |
 | POST | `/contracts/import` | Batch JSON import |
+| GET/POST | `/categories/{id}/purchases` | Purchases in category |
+| GET | `/purchases` | List all purchases |
+| GET/PUT/DELETE | `/purchases/{id}` | Purchase CRUD |
+| GET | `/purchases/summary` | Purchase spending stats |
 | GET/PUT | `/settings` | Renewal preferences |
 | PUT | `/settings/password` | Change password |
-| GET | `/summary` | Dashboard stats |
+| GET | `/summary` | Contract dashboard stats |
 
 Health (`/healthz`), readiness (`/readyz`), and Prometheus metrics (`/metrics`) are available at the root.
 
