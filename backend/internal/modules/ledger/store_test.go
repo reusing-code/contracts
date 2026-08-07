@@ -651,3 +651,46 @@ func TestReviewLedgerTransaction_RejectsCategoryAssignmentForLinkedTransfer(t *t
 		t.Fatalf("transferPairTransactionId = %v, want %s", left.TransferPairTransactionID, rightID)
 	}
 }
+
+func TestLedgerEmailAccount_EncryptedPasswordSurvivesPersistence(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+	now := time.Now().UTC()
+
+	account := LedgerEmailAccount{
+		ID:                uuid.New(),
+		Name:              "Mailbox",
+		IMAPHost:          "imap.example.com",
+		IMAPPort:          993,
+		Username:          "user@example.com",
+		EncryptedPassword: "encrypted-secret",
+		UseTLS:            true,
+		ScanSince:         "2026-01-01",
+		CreatedAt:         now,
+		UpdatedAt:         now,
+	}
+	if err := s.CreateLedgerEmailAccount(ctx, "test-user", account); err != nil {
+		t.Fatalf("CreateLedgerEmailAccount: %v", err)
+	}
+
+	got, err := s.GetLedgerEmailAccount(ctx, "test-user", account.ID)
+	if err != nil {
+		t.Fatalf("GetLedgerEmailAccount: %v", err)
+	}
+	if got.EncryptedPassword != "encrypted-secret" {
+		t.Errorf("EncryptedPassword = %q, want %q — must survive persistence despite json:\"-\" on the API type", got.EncryptedPassword, "encrypted-secret")
+	}
+
+	got.LastScanStatusMessage = "scanned"
+	if err := s.UpdateLedgerEmailAccount(ctx, "test-user", got); err != nil {
+		t.Fatalf("UpdateLedgerEmailAccount: %v", err)
+	}
+
+	list, err := s.ListLedgerEmailAccounts(ctx, "test-user")
+	if err != nil {
+		t.Fatalf("ListLedgerEmailAccounts: %v", err)
+	}
+	if len(list) != 1 || list[0].EncryptedPassword != "encrypted-secret" {
+		t.Errorf("list = %+v, want the encrypted password preserved", list)
+	}
+}

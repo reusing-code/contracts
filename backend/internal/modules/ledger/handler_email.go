@@ -149,6 +149,10 @@ func (h *Handler) TestLedgerEmailAccount(w http.ResponseWriter, r *http.Request)
 		h.storeError(w, err)
 		return
 	}
+	if account.EncryptedPassword == "" {
+		httputil.Error(h.logger, w, http.StatusConflict, "no stored email password; edit the account and re-enter the password")
+		return
+	}
 	password, err := cryptoutil.DecryptString(account.EncryptedPassword, h.emailEncryptionKey)
 	if err != nil {
 		httputil.Error(h.logger, w, http.StatusInternalServerError, "could not decrypt stored email password")
@@ -293,6 +297,10 @@ func (h *Handler) ScanLedgerEmailAccount(w http.ResponseWriter, r *http.Request)
 	} else {
 		if len(h.emailEncryptionKey) == 0 {
 			httputil.Error(h.logger, w, http.StatusInternalServerError, "EMAIL_ENCRYPTION_KEY is not configured")
+			return
+		}
+		if account.EncryptedPassword == "" {
+			httputil.Error(h.logger, w, http.StatusConflict, "no stored email password; edit the account and re-enter the password")
 			return
 		}
 		password, err := cryptoutil.DecryptString(account.EncryptedPassword, h.emailEncryptionKey)
