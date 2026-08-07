@@ -91,6 +91,8 @@ Module routes live in `frontend/src/modules/{id}/routes/` and are registered thr
 
 All development must be done on feature branches. Never commit directly to `main`. Create a descriptive branch (e.g. `feat/add-export`, `fix/renewal-date-calc`) before making changes.
 
+Commit messages and PR descriptions must not contain AI attribution of any kind: no `Co-Authored-By: Claude` (or similar) trailers, no "Generated with Claude Code" lines, and especially no links to AI assistant sessions.
+
 ## Dev workflow
 
 `task dev` from root starts both services. Vite dev server (port 5173) proxies `/api/*`, `/healthz`, `/readyz`, `/metrics` to the Go backend (port 8080). Open http://localhost:5173 in the browser.
