@@ -17,6 +17,7 @@ After every change, check whether `AGENTS.md` (root, `backend/`, `frontend/`) an
 ## Commands (from repo root)
 
 - `task dev` — Start backend (Air) + frontend (Vite) concurrently
+- `task dev:clean-db` — Delete the local dev database (`backend/data`)
 - `task ci` — Run the local backend + frontend checks that must pass before committing
 - `task ci:backend` — Run backend test + lint checks
 - `task ci:frontend` — Run frontend lint + build checks

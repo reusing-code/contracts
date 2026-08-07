@@ -39,6 +39,12 @@ tasks:
     cmds:
       - bun run dev
 
+  dev:clean-db:
+    desc: Delete the local dev database (backend/data)
+    dir: backend
+    cmds:
+      - task clean-db
+
   build:
     desc: Build Docker image
     cmds:
