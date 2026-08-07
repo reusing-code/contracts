@@ -111,6 +111,11 @@ func (s *EmailScanScheduler) scanAccount(ctx context.Context, userID string, acc
 	scanCtx, cancel := context.WithTimeout(ctx, accountScanTimeout)
 	defer cancel()
 
+	if account.EncryptedPassword == "" {
+		s.logger.Warn("skipping email account without stored password", "userID", userID, "accountID", account.ID)
+		s.finishScan(ctx, userID, account, "Background scan skipped: no stored password, re-enter the account password")
+		return
+	}
 	password, err := cryptoutil.DecryptString(account.EncryptedPassword, s.encryptionKey)
 	if err != nil {
 		s.logger.Error("decrypting email account password", "userID", userID, "accountID", account.ID, "error", err)

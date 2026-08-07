@@ -176,22 +176,22 @@ func normalizeLedgerTransaction(t LedgerTransaction) LedgerTransaction {
 }
 
 func loadLedgerEmailAccount(txn *badger.Txn, userID string, id uuid.UUID) (LedgerEmailAccount, error) {
-	var account LedgerEmailAccount
+	var stored storableLedgerEmailAccount
 	item, err := txn.Get(ledEmailAccKey(userID, id))
 	if err != nil {
 		if errors.Is(err, badger.ErrKeyNotFound) {
-			return account, storage.ErrNotFound
+			return LedgerEmailAccount{}, storage.ErrNotFound
 		}
-		return account, err
+		return LedgerEmailAccount{}, err
 	}
 	err = item.Value(func(val []byte) error {
-		return json.Unmarshal(val, &account)
+		return json.Unmarshal(val, &stored)
 	})
-	return account, err
+	return LedgerEmailAccount(stored), err
 }
 
 func storeLedgerEmailAccount(txn *badger.Txn, userID string, account LedgerEmailAccount) error {
-	data, err := json.Marshal(account)
+	data, err := json.Marshal(storableLedgerEmailAccount(account))
 	if err != nil {
 		return err
 	}
@@ -1268,11 +1268,11 @@ func (s *Store) ListLedgerEmailAccounts(_ context.Context, userID string) ([]Led
 		defer it.Close()
 		prefix := ledEmailAccPrefix(userID)
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-			var item LedgerEmailAccount
-			if err := it.Item().Value(func(val []byte) error { return json.Unmarshal(val, &item) }); err != nil {
+			var stored storableLedgerEmailAccount
+			if err := it.Item().Value(func(val []byte) error { return json.Unmarshal(val, &stored) }); err != nil {
 				return err
 			}
-			items = append(items, item)
+			items = append(items, LedgerEmailAccount(stored))
 		}
 		return nil
 	})

@@ -32,6 +32,23 @@ type LedgerEmailAccount struct {
 	UpdatedAt             time.Time  `json:"updatedAt"`
 }
 
+// storableLedgerEmailAccount includes EncryptedPassword for persistence
+// (LedgerEmailAccount has json:"-" on it so it never leaves the API).
+type storableLedgerEmailAccount struct {
+	ID                    uuid.UUID  `json:"id"`
+	Name                  string     `json:"name"`
+	IMAPHost              string     `json:"imapHost"`
+	IMAPPort              int        `json:"imapPort"`
+	Username              string     `json:"username"`
+	EncryptedPassword     string     `json:"encryptedPassword"`
+	UseTLS                bool       `json:"useTls"`
+	ScanSince             string     `json:"scanSince"`
+	LastScanAt            *time.Time `json:"lastScanAt,omitempty"`
+	LastScanStatusMessage string     `json:"lastScanStatusMessage,omitempty"`
+	CreatedAt             time.Time  `json:"createdAt"`
+	UpdatedAt             time.Time  `json:"updatedAt"`
+}
+
 type LedgerEmailAccountInput struct {
 	Name      string `json:"name"`
 	IMAPHost  string `json:"imapHost"`
