@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { usePageTitle } from "@/hooks/use-page-title"
 import { useLedgerTransaction } from "@/modules/ledger/hooks/use-ledger"
 import { LedgerTransactionDetailsCard } from "@/modules/ledger/components/ledger-transaction-details-card"
+import { PaperlessDocumentsSection } from "@/components/paperless/paperless-documents-section"
 
 const routeApi = getRouteApi("/ledger/transactions/$transactionId")
 
@@ -17,5 +18,14 @@ export function LedgerTransactionPage() {
     return <div className="text-sm text-muted-foreground">{t("common.loading")}</div>
   }
 
-  return <LedgerTransactionDetailsCard transaction={transaction} />
+  return (
+    <div className="space-y-6">
+      <LedgerTransactionDetailsCard transaction={transaction} />
+      <PaperlessDocumentsSection
+        entityType="transaction"
+        entityId={transaction.id}
+        entityUrl={`${window.location.origin}/ledger/transactions/${transaction.id}`}
+      />
+    </div>
+  )
 }

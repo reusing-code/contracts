@@ -10,6 +10,7 @@ A self-hosted personal finance manager for tracking contracts, subscriptions, pu
 - **Vehicle cost tracking** — Manage vehicles with cost entries (service, fuel, insurance, tax, tires, mileage, misc), a per-vehicle statistics page with charts, and total cost of ownership projections
 - **Ledger module** — Import bank CSVs into tracked accounts, review transactions, manage categories, add notes/links/references, mark internal transfers, and enrich transactions with parsed email order data
 - **Email order enrichment** — Configure IMAP email accounts for supported importers like Amazon.de and PayPal.de to scan inbox messages and auto-link parsed orders to ledger transactions; accounts are also scanned automatically in the background (`LEDGER_EMAIL_SCAN_INTERVAL`, default every 6h), and `.eml` upload remains available as a fallback
+- **Paperless-ngx integration** — Optionally connect a paperless-ngx instance per user (base URL + API token in settings); search the document archive and attach documents to contracts, purchases, vehicles, cost entries, and ledger transactions, with an automatic back-link ("Kontor" URL custom field) on the paperless document
 - **Category organization** — Per-module categories (e.g. insurance/telecom for contracts, PC hardware/tools for purchases)
 - **Homepage overview** — Dashboard at `/` with summary cards and stats across all modules
 - **Renewal monitoring** — Upcoming renewals with color-coded urgency indicators
@@ -118,6 +119,12 @@ All endpoints under `/api/v1/`. Auth endpoints are public; everything else requi
 | GET | `/modules` | List modules and their enabled state |
 | GET/PUT | `/settings` | Settings incl. enabled modules |
 | PUT | `/settings/password` | Change password |
+| GET/PUT/DELETE | `/paperless/config` | Paperless-ngx connection (per user; token stored encrypted) |
+| POST | `/paperless/config/test` | Test the paperless connection |
+| GET | `/paperless/search` | Proxied paperless document search |
+| GET | `/paperless/documents/{id}/thumb` | Proxied document thumbnail |
+| GET/POST | `/paperless/links/{entityType}/{entityId}` | List / attach paperless document links |
+| DELETE | `/paperless/links/{entityType}/{entityId}/{documentId}` | Detach a document link |
 | GET | `/contracts/summary` | Contract dashboard stats |
 
 Health (`/healthz`), readiness (`/readyz`), and Prometheus metrics (`/metrics`) are available at the root.

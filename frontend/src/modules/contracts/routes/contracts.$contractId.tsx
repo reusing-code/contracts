@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { usePageTitle } from "@/hooks/use-page-title"
 import { useContract, useUpdateContractById } from "@/modules/contracts/hooks/use-contracts"
 import { LinkedTransactionsList } from "@/components/linked-transactions-list"
+import { PaperlessDocumentsSection } from "@/components/paperless/paperless-documents-section"
 import { ContractDialog } from "@/modules/contracts/components/contract-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -50,6 +51,12 @@ export function ContractDetailPage() {
           <div className="md:col-span-2"><div className="text-xs text-muted-foreground">{t("fields.comments")}</div><div className="whitespace-pre-wrap">{contract.comments || "-"}</div></div>
         </CardContent>
       </Card>
+
+      <PaperlessDocumentsSection
+        entityType="contract"
+        entityId={contract.id}
+        entityUrl={`${window.location.origin}/contracts/${contract.id}`}
+      />
 
       <Card>
         <CardHeader>

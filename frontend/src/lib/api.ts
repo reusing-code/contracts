@@ -102,6 +102,29 @@ export async function postForm<T>(path: string, body: FormData): Promise<T> {
   return res.json()
 }
 
+export async function getBlob(path: string): Promise<Blob> {
+  const headers: Record<string, string> = {}
+  const token = getToken()
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
+  }
+
+  const res = await fetch(`${BASE}${path}`, { headers })
+
+  if (res.status === 401) {
+    clearToken()
+    window.location.href = "/login"
+    throw new ApiError(401, "unauthorized")
+  }
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new ApiError(res.status, data.error ?? res.statusText)
+  }
+
+  return res.blob()
+}
+
 export async function download(path: string, fallbackFilename: string): Promise<void> {
   const headers: Record<string, string> = {}
   const token = getToken()

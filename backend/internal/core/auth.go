@@ -37,12 +37,13 @@ func EnabledOnlySeed(store *Store, moduleID string, seed SeedFunc) SeedFunc {
 }
 
 type Handler struct {
-	store       *Store
-	logger      *slog.Logger
-	jwtSecret   []byte
-	emailClient *email.Client
-	seeds       []SeedFunc
-	registry    *module.Registry
+	store          *Store
+	logger         *slog.Logger
+	jwtSecret      []byte
+	emailClient    *email.Client
+	seeds          []SeedFunc
+	registry       *module.Registry
+	paperlessLinks PaperlessLinkStore
 }
 
 func NewHandler(store *Store, logger *slog.Logger, jwtSecret []byte, emailClient *email.Client, seeds []SeedFunc, registry *module.Registry) *Handler {

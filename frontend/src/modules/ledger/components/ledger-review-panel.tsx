@@ -5,6 +5,7 @@ import type { LedgerCategory, LedgerReviewInput, LedgerTransaction } from "@/mod
 import { useReviewLedgerTransaction } from "@/modules/ledger/hooks/use-ledger"
 import { formatAmountMinor, formatLedgerDate, tokenizeLedgerMatchWords } from "@/modules/ledger/lib/ledger-utils"
 import { LedgerTransferManager } from "@/modules/ledger/components/ledger-transfer-manager"
+import { PaperlessDocumentsSection } from "@/components/paperless/paperless-documents-section"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -143,6 +144,13 @@ function LedgerReviewPanelInner({
             <LedgerTransferManager transaction={transaction} compact />
           </div>
         ) : null}
+
+        <PaperlessDocumentsSection
+          entityType="transaction"
+          entityId={transaction.id}
+          entityUrl={`${window.location.origin}/ledger/transactions/${transaction.id}`}
+          variant="inline"
+        />
 
         <div className="flex flex-wrap gap-2">
           <Button

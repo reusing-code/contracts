@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { PaperlessSettingsCard } from "@/components/paperless/paperless-settings-card"
 
 export const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -247,6 +248,8 @@ export function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <PaperlessSettingsCard />
 
       <Card>
         <CardHeader>

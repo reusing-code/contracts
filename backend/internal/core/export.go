@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"github.com/reusing-code/kontor/backend/internal/httputil"
 	"github.com/reusing-code/kontor/backend/internal/middleware"
 	"github.com/reusing-code/kontor/backend/internal/module"
+	"github.com/reusing-code/kontor/backend/internal/paperless"
 	"github.com/reusing-code/kontor/backend/internal/version"
 )
 
@@ -18,12 +20,30 @@ const (
 	exportFormatVersion = 2
 )
 
+// PaperlessLinkStore is the slice of paperless.Store the export orchestrator
+// needs; the paperless config (base URL, token) is deliberately not exported.
+type PaperlessLinkStore interface {
+	ListAllLinks(ctx context.Context, userID string) ([]paperless.Link, error)
+	ImportLinks(ctx context.Context, userID string, links []paperless.Link) error
+}
+
+// SetPaperlessLinks wires the optional paperless document-link store into
+// full export/import.
+func (h *Handler) SetPaperlessLinks(store PaperlessLinkStore) {
+	h.paperlessLinks = store
+}
+
+type paperlessSection struct {
+	Links []paperless.Link `json:"links"`
+}
+
 type exportEnvelope struct {
 	Format        string                     `json:"format"`
 	FormatVersion int                        `json:"formatVersion"`
 	ExportedAt    time.Time                  `json:"exportedAt"`
 	AppVersion    string                     `json:"appVersion"`
 	Settings      *UserSettings              `json:"settings,omitempty"`
+	Paperless     *paperlessSection          `json:"paperless,omitempty"`
 	Modules       map[string]json.RawMessage `json:"modules"`
 }
 
@@ -62,6 +82,17 @@ func (h *Handler) export(w http.ResponseWriter, r *http.Request, modules []modul
 			return
 		}
 		envelope.Settings = &settings
+
+		if h.paperlessLinks != nil {
+			links, err := h.paperlessLinks.ListAllLinks(ctx, userID)
+			if err != nil {
+				httputil.StoreError(h.logger, w, err)
+				return
+			}
+			if len(links) > 0 {
+				envelope.Paperless = &paperlessSection{Links: links}
+			}
+		}
 	}
 
 	for _, m := range modules {
@@ -174,6 +205,25 @@ func (h *Handler) importEnvelope(w http.ResponseWriter, r *http.Request, onlyMod
 		if err := m.PruneDeadLinks(ctx, userID, result); err != nil {
 			httputil.StoreError(h.logger, w, err)
 			return
+		}
+	}
+
+	if onlyModule == "" && envelope.Paperless != nil {
+		if h.paperlessLinks == nil {
+			result.Warnf("paperless links were not imported")
+		} else {
+			links := make([]paperless.Link, 0, len(envelope.Paperless.Links))
+			for _, l := range envelope.Paperless.Links {
+				if !paperless.ValidEntityType(l.EntityType) {
+					result.Warnf("skipped paperless link with unknown entity type %q", l.EntityType)
+					continue
+				}
+				links = append(links, l)
+			}
+			if err := h.paperlessLinks.ImportLinks(ctx, userID, links); err != nil {
+				httputil.StoreError(h.logger, w, err)
+				return
+			}
 		}
 	}
 
