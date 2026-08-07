@@ -22,6 +22,11 @@ tasks:
     cmds:
       - air
 
+  clean-db:
+    desc: Delete the local dev database
+    cmds:
+      - rm -rf ./data
+
   build:
     desc: Build the binary
     cmds:
