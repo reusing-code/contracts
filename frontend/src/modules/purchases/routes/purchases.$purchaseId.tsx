@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { usePageTitle } from "@/hooks/use-page-title"
 import { usePurchase, useUpdatePurchaseById } from "@/modules/purchases/hooks/use-purchases"
 import { LinkedTransactionsList } from "@/components/linked-transactions-list"
+import { PaperlessDocumentsSection } from "@/components/paperless/paperless-documents-section"
 import { PurchaseDialog } from "@/modules/purchases/components/purchase-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -50,6 +51,12 @@ export function PurchaseDetailPage() {
           <div className="md:col-span-2"><div className="text-xs text-muted-foreground">{t("purchaseFields.comments")}</div><div className="whitespace-pre-wrap">{purchase.comments || "-"}</div></div>
         </CardContent>
       </Card>
+
+      <PaperlessDocumentsSection
+        entityType="purchase"
+        entityId={purchase.id}
+        entityUrl={`${window.location.origin}/purchases/${purchase.id}`}
+      />
 
       <Card>
         <CardHeader>

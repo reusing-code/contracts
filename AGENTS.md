@@ -44,6 +44,8 @@ The app ("Kontor") is a multi-module personal finance manager. Modules are first
 
 Contracts and purchases share the item-category machinery (`backend/internal/categories`), scoped via the API route (`/api/v1/modules/{module}/categories`). The Auto module uses its own vehicle/cost key structure instead of categories. The Ledger module has its own hierarchical category type. Cross-module links between ledger transactions and contract/purchase/vehicle items go through the link registry (`backend/internal/storage/link`) so modules never import each other.
 
+An optional cross-cutting **paperless-ngx integration** (`backend/internal/paperless/`, `frontend/src/components/paperless/`) lets each user connect their paperless-ngx instance (base URL + API token, configured on the settings page). Entities (contracts, purchases, vehicles, cost entries, ledger transactions) can then attach paperless documents via a search dialog; Kontor stores the links centrally (outside the modules) and best-effort writes a back-link into a "Kontor" URL-type custom field on the paperless document. All paperless traffic is proxied through the backend; the UI hides all paperless surfaces until the integration is configured.
+
 ### DB key schema
 
 All module data lives under one prefix per module (`u/{userId}/mod/{module}/...`), so a module's footprint is a single prefix scan.
@@ -51,6 +53,7 @@ All module data lives under one prefix per module (`u/{userId}/mod/{module}/...`
 - Users: `usr/{userId}`
 - User email index: `usr_email/{email}`
 - User settings: `u/{userId}/settings` (includes `disabledModules`)
+- Paperless integration: `u/{userId}/paperless/config` (base URL, encrypted API token, cached custom field ID) and `u/{userId}/paperless/link/{entityType}/{entityId}/{documentId}` (entityType: `contract`, `purchase`, `vehicle`, `cost`, `transaction`); links appear as an optional `paperless` section in full exports (the config/token is never exported)
 - Contracts module: `u/{userId}/mod/contracts/` — `cat/{id}`, `con/{id}`, `idx/cat_con/{catId}/{conId}`
 - Purchases module: `u/{userId}/mod/purchases/` — `cat/{id}`, `pur/{id}`, `idx/cat_pur/{catId}/{purId}`
 - Auto module: `u/{userId}/mod/auto/` — `veh/{id}`, `cost/{id}`, `idx/veh_cost/{vehId}/{costId}`

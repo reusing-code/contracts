@@ -62,7 +62,8 @@ Go 1.26+ stdlib `net/http` with method+pattern routing. Single binary that optio
 - `internal/httputil/` — Shared JSON response helpers
 - `internal/middleware/` — Request ID, recovery, metrics, logging, CORS, auth, rate limiting
 - `internal/email/` — SMTP client
-- `internal/cryptoutil/` — Email password encryption
+- `internal/cryptoutil/` — AES-GCM string encryption (email passwords, paperless tokens), keyed by `EMAIL_ENCRYPTION_KEY`
+- `internal/paperless/` — Optional paperless-ngx integration: per-user config (encrypted API token), outbound HTTP client (search, thumbnails, custom-field back-links), central document-link store, handlers. Routes are ungated (not module-scoped); handlers return 409 when the user has not configured the integration. Deleting an entity leaves its paperless links as unreachable keys (accepted; no sweep yet)
 - `internal/server/` — Module wiring, mux setup, middleware, graceful shutdown, SPA serving
 - `internal/version/` — Build version info
 
@@ -123,6 +124,15 @@ All endpoints under `/api/v1/`. JSON request/response with camelCase field names
 - `GET /api/v1/settings` — Get settings (renewal preferences, enabled modules)
 - `PUT /api/v1/settings` — Update settings (`enabledModules` optional; omit to leave unchanged)
 - `PUT /api/v1/settings/password` — Change password
+- `GET /api/v1/paperless/config` — Paperless integration status (`{configured, baseUrl}`; the token is never returned)
+- `PUT /api/v1/paperless/config` — Save paperless base URL + API token (token optional on update; encrypted with `EMAIL_ENCRYPTION_KEY`)
+- `DELETE /api/v1/paperless/config` — Remove the paperless connection (document links are kept)
+- `POST /api/v1/paperless/config/test` — Test the stored paperless connection (502 on upstream failure)
+- `GET /api/v1/paperless/search?query=&page=` — Proxy full-text document search (empty query lists recent documents)
+- `GET /api/v1/paperless/documents/{documentId}/thumb` — Proxy document thumbnail (authenticated stream)
+- `GET /api/v1/paperless/links/{entityType}/{entityId}` — List paperless document links for an entity
+- `POST /api/v1/paperless/links/{entityType}/{entityId}` — Attach documents (`{entityUrl, documents}`); best-effort sets a "Kontor" URL custom field on each paperless document, failures come back as warnings
+- `DELETE /api/v1/paperless/links/{entityType}/{entityId}/{documentId}` — Detach a document; clears the back-link custom field only if it still points at this entity
 - `GET /healthz` — Liveness probe
 - `GET /readyz` — Readiness probe (checks DB)
 - `GET /metrics` — Prometheus metrics

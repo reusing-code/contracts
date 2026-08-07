@@ -24,6 +24,7 @@ interface CostEntriesTableProps {
   entries: CostEntry[]
   onEdit: (entry: CostEntry) => void
   onDelete: (entry: CostEntry) => void
+  onDocuments?: (entry: CostEntry) => void
 }
 
 function CostEntryDetailRow({ entry, colSpan }: { entry: CostEntry; colSpan: number }) {
@@ -51,7 +52,7 @@ function CostEntryDetailRow({ entry, colSpan }: { entry: CostEntry; colSpan: num
   )
 }
 
-export function CostEntriesTable({ entries, onEdit, onDelete }: CostEntriesTableProps) {
+export function CostEntriesTable({ entries, onEdit, onDelete, onDocuments }: CostEntriesTableProps) {
   const { t } = useTranslation()
   const currency = t("common.currency")
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -132,6 +133,11 @@ export function CostEntriesTable({ entries, onEdit, onDelete }: CostEntriesTable
                           <DropdownMenuItem onClick={() => onEdit(entry)}>
                             {t("common.edit")}
                           </DropdownMenuItem>
+                          {onDocuments && (
+                            <DropdownMenuItem onClick={() => onDocuments(entry)}>
+                              {t("paperless.documents")}
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => onDelete(entry)} className="text-destructive">
                             {t("common.delete")}
                           </DropdownMenuItem>

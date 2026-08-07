@@ -41,10 +41,10 @@ React 19 + TypeScript SPA built with Vite. No SSR — this is a CRUD/business ap
 - `src/modules/{contracts,purchases,auto,ledger}/` — Per-module routes, components, hooks, repository, field configs, and types; `index.tsx` exports the ModuleDefinition
 - `src/modules/registry.ts` — Ordered module registry; `src/modules/guard.ts` — route enablement guard
 - `src/routes/` — Core pages: homepage, login, settings, root layout, router
-- `src/components/` — Shared components (sidebar, category dialogs, linked-transactions list); `ui/` for shadcn/ui
-- `src/hooks/` — Shared hooks (use-auth, use-settings, use-modules, use-categories, use-page-title)
-- `src/lib/` — API client, query client, shared repositories (auth, settings, categories), utils
-- `src/types/` — Shared types (auth, category, settings, modules)
+- `src/components/` — Shared components (sidebar, category dialogs, linked-transactions list); `ui/` for shadcn/ui; `paperless/` for the paperless-ngx integration (settings card, search dialog, documents section, thumbnail) — all paperless surfaces render nothing until the integration is configured
+- `src/hooks/` — Shared hooks (use-auth, use-settings, use-modules, use-categories, use-page-title, use-paperless)
+- `src/lib/` — API client, query client, shared repositories (auth, settings, categories, paperless), utils
+- `src/types/` — Shared types (auth, category, settings, modules, paperless)
 - `src/i18n/` — Internationalization setup and locale files
 
 Ledger transaction detail and review flows include explicit internal transfer linking/unlinking. Keep that behavior visible in the UI and avoid implicit unlinking when editing unrelated fields. Cross-module reference UI (linking transactions to contracts/purchases/vehicles) must only offer targets from enabled modules and render references to disabled modules inert.

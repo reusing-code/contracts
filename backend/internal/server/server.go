@@ -23,6 +23,7 @@ import (
 	"github.com/reusing-code/kontor/backend/internal/modules/contracts"
 	"github.com/reusing-code/kontor/backend/internal/modules/ledger"
 	"github.com/reusing-code/kontor/backend/internal/modules/purchases"
+	"github.com/reusing-code/kontor/backend/internal/paperless"
 	"github.com/reusing-code/kontor/backend/internal/storage"
 	"github.com/reusing-code/kontor/backend/internal/storage/link"
 	"github.com/reusing-code/kontor/backend/internal/storage/migration"
@@ -84,6 +85,10 @@ func (s *Server) Run() error {
 	}
 	coreHandler := core.NewHandler(coreStore, s.logger, jwtSecret, emailClient, seeds, registry)
 
+	paperlessStore := paperless.NewStore(engine)
+	paperlessHandler := paperless.NewHandler(paperlessStore, s.logger, s.cfg.EmailEncryptionKey)
+	coreHandler.SetPaperlessLinks(paperlessStore)
+
 	// Protected API routes (require auth)
 	apiMux := http.NewServeMux()
 
@@ -114,6 +119,17 @@ func (s *Server) Run() error {
 	apiMux.HandleFunc("GET /api/v1/settings", coreHandler.GetSettings)
 	apiMux.HandleFunc("PUT /api/v1/settings", coreHandler.UpdateSettings)
 	apiMux.HandleFunc("PUT /api/v1/settings/password", coreHandler.ChangePassword)
+
+	// Paperless-ngx integration (per-user, hidden until configured)
+	apiMux.HandleFunc("GET /api/v1/paperless/config", paperlessHandler.GetConfig)
+	apiMux.HandleFunc("PUT /api/v1/paperless/config", paperlessHandler.PutConfig)
+	apiMux.HandleFunc("DELETE /api/v1/paperless/config", paperlessHandler.DeleteConfig)
+	apiMux.HandleFunc("POST /api/v1/paperless/config/test", paperlessHandler.TestConfig)
+	apiMux.HandleFunc("GET /api/v1/paperless/search", paperlessHandler.Search)
+	apiMux.HandleFunc("GET /api/v1/paperless/documents/{documentId}/thumb", paperlessHandler.Thumbnail)
+	apiMux.HandleFunc("GET /api/v1/paperless/links/{entityType}/{entityId}", paperlessHandler.ListLinks)
+	apiMux.HandleFunc("POST /api/v1/paperless/links/{entityType}/{entityId}", paperlessHandler.AttachLinks)
+	apiMux.HandleFunc("DELETE /api/v1/paperless/links/{entityType}/{entityId}/{documentId}", paperlessHandler.DetachLink)
 
 	protectedAPI := middleware.Auth(jwtSecret)(apiMux)
 

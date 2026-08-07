@@ -23,8 +23,11 @@ import { VehicleDashboard } from "@/modules/auto/components/vehicle-dashboard"
 import { VehicleDialog } from "@/modules/auto/components/vehicle-dialog"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { LinkedTransactionsList } from "@/components/linked-transactions-list"
+import { PaperlessDocumentsSection } from "@/components/paperless/paperless-documents-section"
+import { usePaperlessConfig } from "@/hooks/use-paperless"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 export const autoVehicleDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -50,6 +53,9 @@ function AutoVehicleDetailPage() {
   const [editingEntry, setEditingEntry] = useState<CostEntry | null>(null)
   const [deletingEntry, setDeletingEntry] = useState<CostEntry | null>(null)
   const [editingVehicle, setEditingVehicle] = useState(false)
+  const [documentsEntry, setDocumentsEntry] = useState<CostEntry | null>(null)
+  const { data: paperlessConfig } = usePaperlessConfig()
+  const paperlessConfigured = paperlessConfig?.configured ?? false
 
   function handleCreateCost(data: CostEntryFormData) {
     createCostEntry.mutate(data, { onSuccess: () => toast.success(t("costEntry.created")) })
@@ -104,6 +110,12 @@ function AutoVehicleDetailPage() {
 
       {summary && <VehicleDashboard summary={summary} />}
 
+      <PaperlessDocumentsSection
+        entityType="vehicle"
+        entityId={vehicleId}
+        entityUrl={`${window.location.origin}/auto/vehicles/${vehicleId}`}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle>{t("ledger.linkedTransactions")}</CardTitle>
@@ -121,7 +133,24 @@ function AutoVehicleDetailPage() {
         entries={costEntries}
         onEdit={(e) => setEditingEntry(e)}
         onDelete={(e) => setDeletingEntry(e)}
+        onDocuments={paperlessConfigured ? (e) => setDocumentsEntry(e) : undefined}
       />
+
+      <Dialog open={!!documentsEntry} onOpenChange={(open) => { if (!open) setDocumentsEntry(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("paperless.documents")}</DialogTitle>
+          </DialogHeader>
+          {documentsEntry && (
+            <PaperlessDocumentsSection
+              entityType="cost"
+              entityId={documentsEntry.id}
+              entityUrl={`${window.location.origin}/auto/vehicles/${vehicleId}`}
+              variant="inline"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <CostEntryDialog
         open={costDialogOpen}

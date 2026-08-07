@@ -21,6 +21,7 @@ import (
 	"github.com/reusing-code/kontor/backend/internal/modules/contracts"
 	"github.com/reusing-code/kontor/backend/internal/modules/ledger"
 	"github.com/reusing-code/kontor/backend/internal/modules/purchases"
+	"github.com/reusing-code/kontor/backend/internal/paperless"
 	"github.com/reusing-code/kontor/backend/internal/storage"
 	"github.com/reusing-code/kontor/backend/internal/storage/link"
 )
@@ -34,6 +35,7 @@ type exportHarness struct {
 	purchases *purchases.Module
 	auto      *auto.Module
 	ledger    *ledger.Module
+	paperless *paperless.Store
 	mux       http.Handler
 }
 
@@ -57,6 +59,8 @@ func newExportHarness(t *testing.T) *exportHarness {
 	registry := module.NewRegistry(contractsMod, purchasesMod, autoMod, ledgerMod)
 
 	handler := core.NewHandler(coreStore, logger, []byte("export-test-secret"), nil, nil, registry)
+	paperlessStore := paperless.NewStore(engine)
+	handler.SetPaperlessLinks(paperlessStore)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/export", handler.Export)
@@ -75,6 +79,7 @@ func newExportHarness(t *testing.T) *exportHarness {
 		purchases: purchasesMod,
 		auto:      autoMod,
 		ledger:    ledgerMod,
+		paperless: paperlessStore,
 		mux:       wrapped,
 	}
 }
@@ -665,5 +670,89 @@ func TestImport_OrphanTransactionsGetSyntheticBatch(t *testing.T) {
 	}
 	if !foundSynthetic {
 		t.Error("synthetic batch with the orphan batch ID not found")
+	}
+}
+
+func TestExportImport_PaperlessLinksRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	src := newExportHarness(t)
+
+	entityID := uuid.NewString()
+	linkA := paperless.Link{
+		EntityType: paperless.EntityContract,
+		EntityID:   entityID,
+		DocumentID: 12,
+		Title:      "Contract PDF",
+		EntityURL:  "https://kontor.example/contracts/" + entityID,
+		CreatedAt:  time.Now().UTC().Truncate(time.Second),
+	}
+	linkB := paperless.Link{
+		EntityType: paperless.EntityTransaction,
+		EntityID:   uuid.NewString(),
+		DocumentID: 34,
+		Title:      "Receipt",
+		EntityURL:  "https://kontor.example/ledger/transactions/x",
+		CreatedAt:  time.Now().UTC().Truncate(time.Second),
+	}
+	if err := src.paperless.ImportLinks(ctx, exportTestUser, []paperless.Link{linkA, linkB}); err != nil {
+		t.Fatalf("seeding links: %v", err)
+	}
+
+	exported := exportFull(t, src)
+	if !bytes.Contains(exported, []byte(`"paperless"`)) {
+		t.Fatal("export should contain a paperless section")
+	}
+
+	dst := newExportHarness(t)
+	rec := dst.do(t, "POST", "/api/v1/import", exported)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, body: %s", rec.Code, rec.Body.String())
+	}
+
+	restored, err := dst.paperless.ListAllLinks(ctx, exportTestUser)
+	if err != nil {
+		t.Fatalf("listing restored links: %v", err)
+	}
+	if len(restored) != 2 {
+		t.Fatalf("restored %d links, want 2", len(restored))
+	}
+}
+
+func TestExport_NoPaperlessSectionWithoutLinks(t *testing.T) {
+	src := newExportHarness(t)
+	exported := exportFull(t, src)
+	if bytes.Contains(exported, []byte(`"paperless"`)) {
+		t.Error("export should omit the paperless section when there are no links")
+	}
+}
+
+func TestImport_SkipsInvalidPaperlessEntityType(t *testing.T) {
+	ctx := context.Background()
+	src := newExportHarness(t)
+	if err := src.paperless.ImportLinks(ctx, exportTestUser, []paperless.Link{{
+		EntityType: paperless.EntityContract,
+		EntityID:   uuid.NewString(),
+		DocumentID: 1,
+		EntityURL:  "https://kontor.example/x",
+	}}); err != nil {
+		t.Fatalf("seeding links: %v", err)
+	}
+	exported := bytes.Replace(exportFull(t, src), []byte(`"entityType":"contract"`), []byte(`"entityType":"bogus"`), 1)
+
+	dst := newExportHarness(t)
+	rec := dst.do(t, "POST", "/api/v1/import", exported)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, body: %s", rec.Code, rec.Body.String())
+	}
+	result := decodeBody[importResultBody](t, rec)
+	if !hasWarningContaining(result.Warnings, "unknown entity type") {
+		t.Errorf("expected unknown-entity-type warning, got %v", result.Warnings)
+	}
+	restored, err := dst.paperless.ListAllLinks(ctx, exportTestUser)
+	if err != nil {
+		t.Fatalf("listing restored links: %v", err)
+	}
+	if len(restored) != 0 {
+		t.Errorf("restored = %+v, want none", restored)
 	}
 }
