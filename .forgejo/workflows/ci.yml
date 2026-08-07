@@ -7,12 +7,8 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  contents: read
-  packages: write
-
 env:
-  IMAGE: ghcr.io/${{ github.repository }}
+  IMAGE: ghcr.io/reusing-code/kontor
 
 jobs:
   frontend:
@@ -21,8 +17,8 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
+      - uses: https://github.com/actions/checkout@v6
+      - uses: https://github.com/oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run lint
       - run: bun run build
@@ -33,13 +29,13 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
+      - uses: https://github.com/actions/checkout@v6
+      - uses: https://github.com/actions/setup-go@v6
         with:
           go-version-file: backend/go.mod
           check-latest: true
       - run: go test ./...
-      - uses: golangci/golangci-lint-action@v9
+      - uses: https://github.com/golangci/golangci-lint-action@v9
         with:
           working-directory: backend
 
@@ -48,15 +44,15 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     steps:
-      - uses: actions/checkout@v6
+      - uses: https://github.com/actions/checkout@v6
 
-      - uses: docker/login-action@v3
+      - uses: https://github.com/docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: reusing-code
+          password: ${{ secrets.GHCR_TOKEN }}
 
-      - uses: docker/metadata-action@v5
+      - uses: https://github.com/docker/metadata-action@v5
         id: meta
         with:
           images: ${{ env.IMAGE }}
@@ -70,16 +66,16 @@ jobs:
         id: version
         run: |
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+            echo "version=${GITHUB_REF#refs/tags/}" >> "$FORGEJO_OUTPUT"
           else
-            echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+            echo "version=${GITHUB_REF_NAME}" >> "$FORGEJO_OUTPUT"
           fi
-          echo "commit=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-          echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+          echo "commit=${GITHUB_SHA::7}" >> "$FORGEJO_OUTPUT"
+          echo "date=$(date -u +%Y-%m-%d)" >> "$FORGEJO_OUTPUT"
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: https://github.com/docker/setup-buildx-action@v3
 
-      - uses: docker/build-push-action@v6
+      - uses: https://github.com/docker/build-push-action@v6
         with:
           context: .
           push: true
@@ -89,5 +85,5 @@ jobs:
             VERSION=${{ steps.version.outputs.version }}
             COMMIT=${{ steps.version.outputs.commit }}
             BUILD_DATE=${{ steps.version.outputs.date }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
